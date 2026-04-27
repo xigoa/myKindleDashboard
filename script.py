@@ -121,7 +121,7 @@ def draw_dashboard():
         draw.text((x+20, 65), e['nombre'].upper(), fill=0, font=font_reg)
         draw.text((x+20, 95), e['temp'], fill=0, font=font_huge)
         
-        if "CALLE" not in e['nombre'].upper():
+        if "KALEA" not in e['nombre'].upper():
             draw.text((x+20, 180), f"CO2: {e['co2']} ppm", fill=0, font=font_small)
             draw.rectangle([x+20, 205, x+220, 210], outline=0)
             co2_val = int(e['co2']) if e['co2'].isdigit() else 400
