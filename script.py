@@ -9,24 +9,23 @@ LAT_BILBAO = 43.2627
 LON_BILBAO = -2.9253
 
 def get_weather_bilbao():
-    # Añadimos precipitation_sum en la parte de daily
     url = f"https://api.open-meteo.com/v1/forecast?latitude={LAT_BILBAO}&longitude={LON_BILBAO}&hourly=temperature_2m,precipitation_probability,precipitation,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum&timezone=Europe%2FBerlin"
     data = requests.get(url).json()
     
-    # 1. PRONÓSTICO DIARIO (Ajustado a los 2 próximos días)
+    # 1. PRONÓSTICO DIARIO (Próximos 2 días)
     daily = data['daily']
     forecast_daily = []
-    for i in range(1, 3): # De 1 a 3 para pillar mañana y pasado
+    for i in range(1, 3): 
         forecast_daily.append({
             "fecha": daily['time'][i],
             "max": f"{int(daily['temperature_2m_max'][i])}°",
             "min": f"{int(daily['temperature_2m_min'][i])}°",
             "prob_lluvia": f"{daily['precipitation_probability_max'][i]}%",
-            "mm_sum": f"{daily['precipitation_sum'][i]}L", # Nuevo dato
+            "mm_sum": f"{daily['precipitation_sum'][i]}L",
             "code": daily['weather_code'][i]
         })
 
-    # 2. PRONÓSTICO POR HORAS (Mantenemos las 12 horas)
+    # 2. PRONÓSTICO POR HORAS (¡Ahora 16 horas!)
     hourly = data['hourly']
     now_local = datetime.datetime.utcnow() + datetime.timedelta(hours=2)
     now_str = now_local.strftime("%Y-%m-%dT%H:00")
@@ -38,7 +37,7 @@ def get_weather_bilbao():
             break
 
     forecast_hourly = []
-    for i in range(start_idx, start_idx + 12):
+    for i in range(start_idx, start_idx + 16): # <--- CAMBIO A 16
         time_str = hourly['time'][i].split('T')[1] 
         forecast_hourly.append({
             "hora": time_str,
@@ -75,7 +74,6 @@ def get_netatmo_data():
         res_list = []
         for e in estaciones:
             d = e.get('dashboard_data', {})
-            # Limpiamos nombres
             nombre_limpio = e.get('module_name', 'Principal').replace("Jonen Logela", "JONEN LOGELA").replace("Egongela", "SALON").replace("Kalea", "CALLE")
             res_list.append({
                 "nombre": nombre_limpio,
@@ -84,7 +82,6 @@ def get_netatmo_data():
                 "hum": f"{d.get('Humidity', '--')}%"
             })
             
-        # Forzar que CALLE sea el primero
         calle = next((item for item in res_list if item["nombre"] == "CALLE"), None)
         otros = [item for item in res_list if item["nombre"] != "CALLE"]
         final_list = ([calle] if calle else []) + otros
@@ -102,10 +99,11 @@ def draw_dashboard():
     draw = ImageDraw.Draw(img)
 
     try:
-        font_huge = ImageFont.truetype("Roboto-Bold.ttf", 75)
+        # Hemos reducido la fuente huge de 75 a 65 para comprimir las cajas
+        font_huge = ImageFont.truetype("Roboto-Bold.ttf", 65) 
         font_big = ImageFont.truetype("Roboto-Bold.ttf", 35)
         font_med = ImageFont.truetype("Roboto-Bold.ttf", 22)
-        font_reg = ImageFont.truetype("Roboto-Regular.ttf", 20)
+        font_reg = ImageFont.truetype("Roboto-Regular.ttf", 18)
         font_small = ImageFont.truetype("Roboto-Regular.ttf", 15)
     except:
         font_huge = font_big = font_med = font_reg = font_small = ImageFont.load_default()
@@ -115,65 +113,39 @@ def draw_dashboard():
     ahora = datetime.datetime.now().strftime("%d %b | %H:%M")
     draw.text((20, 10), f"BILBAO - {ahora}", fill=255, font=font_med)
 
-    # --- BLOQUE NETATMO ---
+    # --- BLOQUE NETATMO (COMPRIMIDO) ---
     for i, e in enumerate(netatmo):
         x = 20 + (i * 260)
-        draw.rounded_rectangle([x, 65, x+240, 290], radius=15, outline=0, width=3)
-        draw.text((x+20, 80), e['nombre'].upper(), fill=0, font=font_reg)
-        draw.text((x+20, 110), e['temp'], fill=0, font=font_huge)
+        # Altura de la caja reducida: ahora termina en 245 (antes 290)
+        draw.rounded_rectangle([x, 55, x+240, 245], radius=15, outline=0, width=3)
+        draw.text((x+20, 65), e['nombre'].upper(), fill=0, font=font_reg)
+        draw.text((x+20, 95), e['temp'], fill=0, font=font_huge)
         
-        # Limpiar CO2 en CALLE de forma segura
         if "CALLE" not in e['nombre'].upper():
-            draw.text((x+20, 205), f"CO2: {e['co2']} ppm", fill=0, font=font_reg)
-            draw.rectangle([x+20, 230, x+220, 235], outline=0)
+            draw.text((x+20, 180), f"CO2: {e['co2']} ppm", fill=0, font=font_small)
+            draw.rectangle([x+20, 205, x+220, 210], outline=0)
             co2_val = int(e['co2']) if e['co2'].isdigit() else 400
             bar_width = min(int((co2_val/1500) * 200), 200)
-            draw.rectangle([x+20, 230, x+20+bar_width, 235], fill=0)
+            draw.rectangle([x+20, 205, x+20+bar_width, 210], fill=0)
             
-        # La humedad sí la dejamos para todos (ajustando la altura si es CALLE)
-        y_hum = 250 if "CALLE" not in e['nombre'].upper() else 205
-        draw.text((x+20, y_hum), f"Hum: {e['hum']}", fill=0, font=font_reg)
+        y_hum = 220 if "CALLE" not in e['nombre'].upper() else 180
+        draw.text((x+20, y_hum), f"Hum: {e['hum']}", fill=0, font=font_small)
 
-    # --- BLOQUE TIEMPO: HORAS (Izquierda, 2 Columnas) ---
-    draw.text((15, 320), "PRÓXIMAS 12 HORAS", fill=0, font=font_med)
-    draw.line([15, 350, 440, 350], fill=0, width=2) # Alargamos la línea
+    # --- BLOQUE TIEMPO: HORAS (Izquierda, 2 Columnas de 8 filas) ---
+    # Subimos los títulos a la altura 275 (antes 320)
+    draw.text((15, 275), "PRÓXIMAS 16 HORAS", fill=0, font=font_med)
+    draw.line([15, 305, 500, 305], fill=0, width=2) 
 
     for i, h in enumerate(hourly):
-        col = i // 6   
-        row = i % 6    
+        col = i // 8   # 8 filas por columna
+        row = i % 8    
         
-        # Aumentamos la separación entre las dos columnas a 220px (antes 185)
-        x = 15 + (col * 220) 
-        y = 365 + (row * 35) 
+        # Separación GIGANTE entre columnas (x250) para que nada se monte
+        x = 15 + (col * 250) 
+        y = 315 + (row * 33) # Más juntitas verticalmente (salto de 33px)
         
         icono = get_weather_icon(h['code'])[:3] 
         texto_lluvia = f"{h['prob_lluvia']} ({h['mm']}L)"
         
-        # Ajustamos los espacios internos
         draw.text((x, y), h['hora'], fill=0, font=font_reg)
-        draw.text((x + 55, y), icono, fill=0, font=font_small)
-        draw.text((x + 90, y), h['temp'], fill=0, font=font_reg)    
-        draw.text((x + 125, y), texto_lluvia, fill=0, font=font_small)
-
-    # --- BLOQUE TIEMPO: PRÓXIMOS 2 DÍAS (Derecha) ---
-    # Empujamos todo este bloque al píxel 470 (antes estaba en el 380)
-    draw.text((470, 320), "PRÓXIMOS DÍAS", fill=0, font=font_med)
-    draw.line([470, 350, 785, 350], fill=0, width=2)
-
-    for i, w in enumerate(daily):
-        # Juntamos los días a 160px de separación (antes 210)
-        x = 470 + (i * 160) 
-        fecha_obj = datetime.datetime.strptime(w['fecha'], '%Y-%m-%d')
-        dia_sem = ["LUN", "MAR", "MIE", "JUE", "VIE", "SAB", "DOM"][fecha_obj.weekday()]
-        
-        draw.text((x, 370), dia_sem, fill=0, font=font_med)
-        draw.text((x, 410), get_weather_icon(w['code']), fill=0, font=font_reg)
-        draw.text((x, 450), f"Max: {w['max']}", fill=0, font=font_med)
-        draw.text((x, 485), f"Min: {w['min']}", fill=0, font=font_reg)
-        draw.text((x, 520), f"Lluvia: {w['prob_lluvia']}", fill=0, font=font_reg)
-        draw.text((x, 545), f"Total: {w['mm_sum']}", fill=0, font=font_reg)
-        
-    img.save("dashboard.png")
-
-if __name__ == "__main__":
-    draw_dashboard()
+        draw.text((x + 55, y), icono, fill=0,
