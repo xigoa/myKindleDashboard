@@ -134,32 +134,35 @@ def draw_dashboard():
         y_hum = 250 if "CALLE" not in e['nombre'].upper() else 205
         draw.text((x+20, y_hum), f"Hum: {e['hum']}", fill=0, font=font_reg)
 
-   # --- BLOQUE TIEMPO: HORAS (Izquierda, 2 Columnas) ---
-    draw.text((20, 320), "PRÓXIMAS 12 HORAS", fill=0, font=font_med)
-    draw.line([20, 350, 360, 350], fill=0, width=2)
+    # --- BLOQUE TIEMPO: HORAS (Izquierda, 2 Columnas) ---
+    draw.text((15, 320), "PRÓXIMAS 12 HORAS", fill=0, font=font_med)
+    draw.line([15, 350, 440, 350], fill=0, width=2) # Alargamos la línea
 
     for i, h in enumerate(hourly):
         col = i // 6   
         row = i % 6    
-        x = 20 + (col * 185) 
+        
+        # Aumentamos la separación entre las dos columnas a 220px (antes 185)
+        x = 15 + (col * 220) 
         y = 365 + (row * 35) 
         
         icono = get_weather_icon(h['code'])[:3] 
-        # Siempre mostramos los litros, incluso si es 0.0
         texto_lluvia = f"{h['prob_lluvia']} ({h['mm']}L)"
         
+        # Ajustamos los espacios internos
         draw.text((x, y), h['hora'], fill=0, font=font_reg)
-        draw.text((x + 60, y), icono, fill=0, font=font_small)
-        draw.text((x + 95, y), h['temp'], fill=0, font=font_reg)    
-        draw.text((x + 130, y), texto_lluvia, fill=0, font=font_small)
+        draw.text((x + 55, y), icono, fill=0, font=font_small)
+        draw.text((x + 90, y), h['temp'], fill=0, font=font_reg)    
+        draw.text((x + 125, y), texto_lluvia, fill=0, font=font_small)
 
     # --- BLOQUE TIEMPO: PRÓXIMOS 2 DÍAS (Derecha) ---
-    draw.text((380, 320), "PRÓXIMOS DÍAS", fill=0, font=font_med)
-    draw.line([380, 350, 780, 350], fill=0, width=2)
+    # Empujamos todo este bloque al píxel 470 (antes estaba en el 380)
+    draw.text((470, 320), "PRÓXIMOS DÍAS", fill=0, font=font_med)
+    draw.line([470, 350, 785, 350], fill=0, width=2)
 
     for i, w in enumerate(daily):
-        # Ahora dividimos el espacio entre 2 (aprox 200px por día)
-        x = 400 + (i * 210) 
+        # Juntamos los días a 160px de separación (antes 210)
+        x = 470 + (i * 160) 
         fecha_obj = datetime.datetime.strptime(w['fecha'], '%Y-%m-%d')
         dia_sem = ["LUN", "MAR", "MIE", "JUE", "VIE", "SAB", "DOM"][fecha_obj.weekday()]
         
@@ -167,10 +170,9 @@ def draw_dashboard():
         draw.text((x, 410), get_weather_icon(w['code']), fill=0, font=font_reg)
         draw.text((x, 450), f"Max: {w['max']}", fill=0, font=font_med)
         draw.text((x, 485), f"Min: {w['min']}", fill=0, font=font_reg)
-        # Añadimos probabilidad + litros totales del día
         draw.text((x, 520), f"Lluvia: {w['prob_lluvia']}", fill=0, font=font_reg)
         draw.text((x, 545), f"Total: {w['mm_sum']}", fill=0, font=font_reg)
-
+        
     img.save("dashboard.png")
 
 if __name__ == "__main__":
