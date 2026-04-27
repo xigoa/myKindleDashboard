@@ -110,7 +110,7 @@ def draw_dashboard():
 
     # --- CABECERA ---
     draw.rectangle([0, 0, 800, 45], fill=0)
-    ahora = datetime.datetime.now()+2.strftime("%d %b | %H:%M")
+    ahora = datetime.datetime.now().strftime("%d %b | %H:%M")
     draw.text((20, 10), f"BILBAO - {ahora}", fill=255, font=font_med)
 
     # --- BLOQUE NETATMO (COMPRIMIDO) ---
