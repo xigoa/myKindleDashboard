@@ -163,10 +163,10 @@ def draw_dashboard():
         
         draw.text((x, 330), dia_sem, fill=0, font=font_med)
         draw.text((x, 360), get_weather_icon(w['code']), fill=0, font=font_reg)
-        draw.text((x, 440), f"Max: {w['max']}", fill=0, font=font_med)
-        draw.text((x, 470), f"Min: {w['min']}", fill=0, font=font_reg)
-        draw.text((x, 530), f"Lluvia: {w['prob_lluvia']}", fill=0, font=font_reg)
-        draw.text((x, 560), f"Total: {w['mm_sum']}", fill=0, font=font_reg)
+        draw.text((x, 430), f"Max: {w['max']}", fill=0, font=font_med)
+        draw.text((x, 460), f"Min: {w['min']}", fill=0, font=font_reg)
+        draw.text((x, 515), f"Lluvia: {w['prob_lluvia']}", fill=0, font=font_reg)
+        draw.text((x, 545), f"Total: {w['mm_sum']}", fill=0, font=font_reg)
 
     img.save("dashboard.png")
 
