@@ -9,25 +9,25 @@ LAT_BILBAO = 43.2627
 LON_BILBAO = -2.9253
 
 def get_weather_bilbao():
-    # Pedimos datos por hora y por día
-    url = f"https://api.open-meteo.com/v1/forecast?latitude={LAT_BILBAO}&longitude={LON_BILBAO}&hourly=temperature_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Europe%2FBerlin"
+    # Añadimos precipitation_sum en la parte de daily
+    url = f"https://api.open-meteo.com/v1/forecast?latitude={LAT_BILBAO}&longitude={LON_BILBAO}&hourly=temperature_2m,precipitation_probability,precipitation,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum&timezone=Europe%2FBerlin"
     data = requests.get(url).json()
     
-    # 1. PRONÓSTICO DIARIO (Saltamos el [0] que es hoy, cogemos los 3 siguientes)
+    # 1. PRONÓSTICO DIARIO (Ajustado a los 2 próximos días)
     daily = data['daily']
     forecast_daily = []
-    for i in range(1, 4):
+    for i in range(1, 3): # De 1 a 3 para pillar mañana y pasado
         forecast_daily.append({
             "fecha": daily['time'][i],
             "max": f"{int(daily['temperature_2m_max'][i])}°",
             "min": f"{int(daily['temperature_2m_min'][i])}°",
             "prob_lluvia": f"{daily['precipitation_probability_max'][i]}%",
+            "mm_sum": f"{daily['precipitation_sum'][i]}L", # Nuevo dato
             "code": daily['weather_code'][i]
         })
 
-    # 2. PRONÓSTICO POR HORAS (Las próximas 4 horas)
+    # 2. PRONÓSTICO POR HORAS (Mantenemos las 12 horas)
     hourly = data['hourly']
-    # Calculamos la hora actual aprox en Bilbao (UTC+2 ahora mismo)
     now_local = datetime.datetime.utcnow() + datetime.timedelta(hours=2)
     now_str = now_local.strftime("%Y-%m-%dT%H:00")
     
@@ -39,11 +39,12 @@ def get_weather_bilbao():
 
     forecast_hourly = []
     for i in range(start_idx, start_idx + 12):
-        time_str = hourly['time'][i].split('T')[1] # Nos quedamos solo con HH:MM
+        time_str = hourly['time'][i].split('T')[1] 
         forecast_hourly.append({
             "hora": time_str,
             "temp": f"{int(hourly['temperature_2m'][i])}°",
             "prob_lluvia": f"{hourly['precipitation_probability'][i]}%",
+            "mm": hourly['precipitation'][i],
             "code": hourly['weather_code'][i]
         })
         
@@ -133,32 +134,32 @@ def draw_dashboard():
         y_hum = 250 if "CALLE" not in e['nombre'].upper() else 205
         draw.text((x+20, y_hum), f"Hum: {e['hum']}", fill=0, font=font_reg)
 
-    # --- BLOQUE TIEMPO: HORAS (Izquierda, 2 Columnas) ---
+   # --- BLOQUE TIEMPO: HORAS (Izquierda, 2 Columnas) ---
     draw.text((20, 320), "PRÓXIMAS 12 HORAS", fill=0, font=font_med)
-    draw.line([20, 350, 360, 350], fill=0, width=2) # Línea un poco más ancha
+    draw.line([20, 350, 360, 350], fill=0, width=2)
 
     for i, h in enumerate(hourly):
         col = i // 6   
         row = i % 6    
-        
-        # Separamos más las dos columnas (180px en lugar de 170px)
-        x = 20 + (col * 180) 
+        x = 20 + (col * 185) 
         y = 365 + (row * 35) 
         
         icono = get_weather_icon(h['code'])[:3] 
+        # Siempre mostramos los litros, incluso si es 0.0
+        texto_lluvia = f"{h['prob_lluvia']} ({h['mm']}L)"
         
-        # Aumentamos el espaciado horizontal interno
         draw.text((x, y), h['hora'], fill=0, font=font_reg)
-        draw.text((x + 60, y), icono, fill=0, font=font_small)       # Antes era 50
-        draw.text((x + 100, y), h['temp'], fill=0, font=font_reg)    # Antes era 90
-        draw.text((x + 140, y), h['prob_lluvia'], fill=0, font=font_small) # Antes era 125
+        draw.text((x + 60, y), icono, fill=0, font=font_small)
+        draw.text((x + 95, y), h['temp'], fill=0, font=font_reg)    
+        draw.text((x + 130, y), texto_lluvia, fill=0, font=font_small)
 
-    # --- BLOQUE TIEMPO: PRÓXIMOS DÍAS (Derecha) ---
+    # --- BLOQUE TIEMPO: PRÓXIMOS 2 DÍAS (Derecha) ---
     draw.text((380, 320), "PRÓXIMOS DÍAS", fill=0, font=font_med)
     draw.line([380, 350, 780, 350], fill=0, width=2)
 
     for i, w in enumerate(daily):
-        x = 380 + (i * 140)
+        # Ahora dividimos el espacio entre 2 (aprox 200px por día)
+        x = 400 + (i * 210) 
         fecha_obj = datetime.datetime.strptime(w['fecha'], '%Y-%m-%d')
         dia_sem = ["LUN", "MAR", "MIE", "JUE", "VIE", "SAB", "DOM"][fecha_obj.weekday()]
         
@@ -166,7 +167,9 @@ def draw_dashboard():
         draw.text((x, 410), get_weather_icon(w['code']), fill=0, font=font_reg)
         draw.text((x, 450), f"Max: {w['max']}", fill=0, font=font_med)
         draw.text((x, 485), f"Min: {w['min']}", fill=0, font=font_reg)
+        # Añadimos probabilidad + litros totales del día
         draw.text((x, 520), f"Lluvia: {w['prob_lluvia']}", fill=0, font=font_reg)
+        draw.text((x, 545), f"Total: {w['mm_sum']}", fill=0, font=font_reg)
 
     img.save("dashboard.png")
 
