@@ -74,7 +74,7 @@ def get_netatmo_data():
         res_list = []
         for e in estaciones:
             d = e.get('dashboard_data', {})
-            nombre_limpio = e.get('module_name', 'Principal').replace("Jonen Logela", "JONEN LOGELA").replace("Egongela", "SALON").replace("Kalea", "CALLE")
+            nombre_limpio = e.get('module_name', 'Principal').replace("Jonen Logela", "JONEN LOGELA").replace("Egongela", "EGONGELA").replace("Kalea", "KALEA")
             res_list.append({
                 "nombre": nombre_limpio,
                 "temp": f"{d.get('Temperature', '--')}°",
@@ -82,8 +82,8 @@ def get_netatmo_data():
                 "hum": f"{d.get('Humidity', '--')}%"
             })
             
-        calle = next((item for item in res_list if item["nombre"] == "CALLE"), None)
-        otros = [item for item in res_list if item["nombre"] != "CALLE"]
+        calle = next((item for item in res_list if item["nombre"] == "KALEA"), None)
+        otros = [item for item in res_list if item["nombre"] != "KALEA"]
         final_list = ([calle] if calle else []) + otros
         
         return final_list[:3]
