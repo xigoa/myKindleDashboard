@@ -161,12 +161,12 @@ def draw_dashboard():
         fecha_obj = datetime.datetime.strptime(w['fecha'], '%Y-%m-%d')
         dia_sem = ["LUN", "MAR", "MIE", "JUE", "VIE", "SAB", "DOM"][fecha_obj.weekday()]
         
-        draw.text((x, 320), dia_sem, fill=0, font=font_med)
+        draw.text((x, 330), dia_sem, fill=0, font=font_med)
         draw.text((x, 360), get_weather_icon(w['code']), fill=0, font=font_reg)
-        draw.text((x, 400), f"Max: {w['max']}", fill=0, font=font_med)
-        draw.text((x, 435), f"Min: {w['min']}", fill=0, font=font_reg)
-        draw.text((x, 480), f"Lluvia: {w['prob_lluvia']}", fill=0, font=font_reg)
-        draw.text((x, 505), f"Total: {w['mm_sum']}", fill=0, font=font_reg)
+        draw.text((x, 440), f"Max: {w['max']}", fill=0, font=font_med)
+        draw.text((x, 470), f"Min: {w['min']}", fill=0, font=font_reg)
+        draw.text((x, 530), f"Lluvia: {w['prob_lluvia']}", fill=0, font=font_reg)
+        draw.text((x, 560), f"Total: {w['mm_sum']}", fill=0, font=font_reg)
 
     img.save("dashboard.png")
 
