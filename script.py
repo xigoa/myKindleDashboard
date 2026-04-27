@@ -9,33 +9,53 @@ LAT_BILBAO = 43.2627
 LON_BILBAO = -2.9253
 
 def get_weather_bilbao():
-    # API de Open-Meteo (Gratis, sin registro, excelente para Bilbao)
-    url = f"https://api.open-meteo.com/v1/forecast?latitude={LAT_BILBAO}&longitude={LON_BILBAO}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Europe%2FBerlin"
+    # Pedimos datos por hora y por día
+    url = f"https://api.open-meteo.com/v1/forecast?latitude={LAT_BILBAO}&longitude={LON_BILBAO}&hourly=temperature_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Europe%2FBerlin"
     data = requests.get(url).json()
-    daily = data['daily']
     
-    forecast = []
-    # Sacamos los próximos 4 días
-    for i in range(4):
-        forecast.append({
+    # 1. PRONÓSTICO DIARIO (Saltamos el [0] que es hoy, cogemos los 3 siguientes)
+    daily = data['daily']
+    forecast_daily = []
+    for i in range(1, 4):
+        forecast_daily.append({
             "fecha": daily['time'][i],
             "max": f"{int(daily['temperature_2m_max'][i])}°",
             "min": f"{int(daily['temperature_2m_min'][i])}°",
             "prob_lluvia": f"{daily['precipitation_probability_max'][i]}%",
             "code": daily['weather_code'][i]
         })
-    return forecast
+
+    # 2. PRONÓSTICO POR HORAS (Las próximas 4 horas)
+    hourly = data['hourly']
+    # Calculamos la hora actual aprox en Bilbao (UTC+2 ahora mismo)
+    now_local = datetime.datetime.utcnow() + datetime.timedelta(hours=2)
+    now_str = now_local.strftime("%Y-%m-%dT%H:00")
+    
+    start_idx = 0
+    for i, t in enumerate(hourly['time']):
+        if t >= now_str:
+            start_idx = i
+            break
+
+    forecast_hourly = []
+    for i in range(start_idx, start_idx + 4):
+        time_str = hourly['time'][i].split('T')[1] # Nos quedamos solo con HH:MM
+        forecast_hourly.append({
+            "hora": time_str,
+            "temp": f"{int(hourly['temperature_2m'][i])}°",
+            "prob_lluvia": f"{hourly['precipitation_probability'][i]}%",
+            "code": hourly['weather_code'][i]
+        })
+        
+    return forecast_hourly, forecast_daily
 
 def get_weather_icon(code):
-    # Traducción simple de códigos de tiempo a emojis/texto
-    # 0=Despejado, 1-3=Nubes, 45-48=Niebla, 51-67=Llovizna/Lluvia, 71-77=Nieve, 80-82=Chubascos
     if code == 0: return "SOL"
     if code in [1, 2, 3]: return "NUBES"
     if code in [51, 53, 55, 61, 63, 65, 80, 81, 82]: return "LLUVIA"
     return "VARIO"
 
 def get_netatmo_data():
-    # (Mantenemos tu lógica de Netatmo, asegúrate de tener los SECRETS en GitHub)
     try:
         token_url = "https://api.netatmo.com/oauth2/token"
         payload = {
@@ -52,74 +72,92 @@ def get_netatmo_data():
         estaciones = [devices] + devices.get('modules', [])
         
         res_list = []
-        for e in estaciones[:3]:
+        for e in estaciones:
             d = e.get('dashboard_data', {})
+            # Limpiamos nombres
+            nombre_limpio = e.get('module_name', 'Principal').replace("Jonen Logela", "JONEN LOGELA").replace("Egongela", "SALON").replace("Kalea", "CALLE")
             res_list.append({
-                "nombre": e.get('module_name', 'Principal').replace("Jonen Logela", "JON").replace("Egongela", "SALON").replace("Kalea", "CALLE"),
+                "nombre": nombre_limpio,
                 "temp": f"{d.get('Temperature', '--')}°",
                 "co2": f"{d.get('CO2', '--')}",
                 "hum": f"{d.get('Humidity', '--')}%"
             })
-        return res_list
-    except:
+            
+        # Forzar que CALLE sea el primero
+        calle = next((item for item in res_list if item["nombre"] == "CALLE"), None)
+        otros = [item for item in res_list if item["nombre"] != "CALLE"]
+        final_list = ([calle] if calle else []) + otros
+        
+        return final_list[:3]
+    except Exception as e:
+        print(f"Error Netatmo: {e}")
         return [{"nombre": "ERROR", "temp": "--", "co2": "--", "hum": "--"}] * 3
 
 def draw_dashboard():
-    # 1. Obtener datos
     netatmo = get_netatmo_data()
-    weather = get_weather_bilbao()
+    hourly, daily = get_weather_bilbao()
     
-    # 2. Crear lienzo (Modo L = 8-bit gris)
     img = Image.new('L', (WIDTH, HEIGHT), 255)
     draw = ImageDraw.Draw(img)
 
-    # 3. Cargar fuentes (Asegúrate de subirlas a GitHub)
     try:
-        font_huge = ImageFont.truetype("Roboto-Bold.ttf", 70)
-        font_big = ImageFont.truetype("Roboto-Bold.ttf", 40)
-        font_med = ImageFont.truetype("Roboto-Bold.ttf", 25)
-        font_reg = ImageFont.truetype("Roboto-Regular.ttf", 18)
+        font_huge = ImageFont.truetype("Roboto-Bold.ttf", 75)
+        font_big = ImageFont.truetype("Roboto-Bold.ttf", 35)
+        font_med = ImageFont.truetype("Roboto-Bold.ttf", 22)
+        font_reg = ImageFont.truetype("Roboto-Regular.ttf", 20)
     except:
         font_huge = font_big = font_med = font_reg = ImageFont.load_default()
 
     # --- CABECERA ---
-    draw.rectangle([0, 0, 800, 50], fill=0) # Barra negra arriba
+    draw.rectangle([0, 0, 800, 45], fill=0)
     ahora = datetime.datetime.now().strftime("%d %b | %H:%M")
     draw.text((20, 10), f"BILBAO - {ahora}", fill=255, font=font_med)
 
-    # --- BLOQUE NETATMO (TARJETAS) ---
+    # --- BLOQUE NETATMO ---
     for i, e in enumerate(netatmo):
         x = 20 + (i * 260)
-        # Dibujar tarjeta con borde suave
-        draw.rounded_rectangle([x, 70, x+240, 310], radius=15, outline=0, width=3)
-        draw.text((x+20, 85), e['nombre'].upper(), fill=0, font=font_reg)
+        draw.rounded_rectangle([x, 65, x+240, 290], radius=15, outline=0, width=3)
+        draw.text((x+20, 80), e['nombre'].upper(), fill=0, font=font_reg)
         draw.text((x+20, 110), e['temp'], fill=0, font=font_huge)
-        # Iconos textuales o datos extra
-        draw.text((x+20, 210), f"CO2: {e['co2']} ppm", fill=0, font=font_reg)
-        draw.text((x+20, 245), f"Hum: {e['hum']}", fill=0, font=font_reg)
-        # Una pequeña barra visual para el CO2 (si es > 1000 se rellena)
-        draw.rectangle([x+20, 235, x+220, 240], outline=0)
-        co2_val = int(e['co2']) if e['co2'].isdigit() else 400
-        bar_width = min(int((co2_val/1500) * 200), 200)
-        draw.rectangle([x+20, 235, x+20+bar_width, 240], fill=0)
+        
+        # Si NO es la CALLE, dibujamos el CO2
+        if e['nombre'] != "CALLE":
+            draw.text((x+20, 205), f"CO2: {e['co2']} ppm", fill=0, font=font_reg)
+            draw.rectangle([x+20, 230, x+220, 235], outline=0)
+            co2_val = int(e['co2']) if e['co2'].isdigit() else 400
+            bar_width = min(int((co2_val/1500) * 200), 200)
+            draw.rectangle([x+20, 230, x+20+bar_width, 235], fill=0)
+            
+        # La humedad sí la dejamos para todos
+        y_hum = 250 if e['nombre'] != "CALLE" else 205
+        draw.text((x+20, y_hum), f"Hum: {e['hum']}", fill=0, font=font_reg)
 
-    # --- BLOQUE TIEMPO BILBAO ---
-    draw.text((20, 340), "PRONÓSTICO BILBAO", fill=0, font=font_med)
-    draw.line([20, 375, 780, 375], fill=0, width=2)
+    # --- BLOQUE TIEMPO: HORAS (Izquierda) ---
+    draw.text((20, 320), "HOY POR HORAS", fill=0, font=font_med)
+    draw.line([20, 350, 340, 350], fill=0, width=2)
 
-    for i, w in enumerate(weather):
-        x = 20 + (i * 195)
+    for i, h in enumerate(hourly):
+        y = 370 + (i * 50)
+        draw.text((20, y), h['hora'], fill=0, font=font_med)
+        draw.text((100, y), get_weather_icon(h['code']), fill=0, font=font_reg)
+        draw.text((190, y), h['temp'], fill=0, font=font_big)
+        draw.text((270, y), f"{h['prob_lluvia']} llo.", fill=0, font=font_reg)
+
+    # --- BLOQUE TIEMPO: PRÓXIMOS DÍAS (Derecha) ---
+    draw.text((380, 320), "PRÓXIMOS DÍAS", fill=0, font=font_med)
+    draw.line([380, 350, 780, 350], fill=0, width=2)
+
+    for i, w in enumerate(daily):
+        x = 380 + (i * 140)
         fecha_obj = datetime.datetime.strptime(w['fecha'], '%Y-%m-%d')
         dia_sem = ["LUN", "MAR", "MIE", "JUE", "VIE", "SAB", "DOM"][fecha_obj.weekday()]
         
-        # Caja de día
-        draw.text((x+10, 390), dia_sem, fill=0, font=font_med)
-        draw.text((x+10, 425), get_weather_icon(w['code']), fill=0, font=font_reg)
-        draw.text((x+10, 460), f"MAX: {w['max']}", fill=0, font=font_med)
-        draw.text((x+10, 495), f"MIN: {w['min']}", fill=0, font=font_reg)
-        draw.text((x+10, 530), f"Lluvia: {w['prob_lluvia']}", fill=0, font=font_reg)
+        draw.text((x, 370), dia_sem, fill=0, font=font_med)
+        draw.text((x, 410), get_weather_icon(w['code']), fill=0, font=font_reg)
+        draw.text((x, 450), f"Max: {w['max']}", fill=0, font=font_med)
+        draw.text((x, 485), f"Min: {w['min']}", fill=0, font=font_reg)
+        draw.text((x, 520), f"Lluvia: {w['prob_lluvia']}", fill=0, font=font_reg)
 
-    # Guardar
     img.save("dashboard.png")
 
 if __name__ == "__main__":
