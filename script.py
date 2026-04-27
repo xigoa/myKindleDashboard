@@ -148,4 +148,27 @@ def draw_dashboard():
         texto_lluvia = f"{h['prob_lluvia']} ({h['mm']}L)"
         
         draw.text((x, y), h['hora'], fill=0, font=font_reg)
-        draw.text((x + 55, y), icono, fill=0,
+        draw.text((x + 55, y), icono, fill=0, font=font_small)
+        draw.text((x + 95, y), h['temp'], fill=0, font=font_reg)    
+        draw.text((x + 135, y), texto_lluvia, fill=0, font=font_small)
+
+    # --- BLOQUE TIEMPO: PRÓXIMOS 2 DÍAS (Derecha) ---
+    draw.text((530, 275), "PRÓXIMAS PREVISIONES", fill=0, font=font_med)
+    draw.line([530, 305, 785, 305], fill=0, width=2)
+
+    for i, w in enumerate(daily):
+        x = 530 + (i * 135) # Juntamos los dos días en el lado derecho
+        fecha_obj = datetime.datetime.strptime(w['fecha'], '%Y-%m-%d')
+        dia_sem = ["LUN", "MAR", "MIE", "JUE", "VIE", "SAB", "DOM"][fecha_obj.weekday()]
+        
+        draw.text((x, 320), dia_sem, fill=0, font=font_med)
+        draw.text((x, 360), get_weather_icon(w['code']), fill=0, font=font_reg)
+        draw.text((x, 400), f"Max: {w['max']}", fill=0, font=font_med)
+        draw.text((x, 435), f"Min: {w['min']}", fill=0, font=font_reg)
+        draw.text((x, 480), f"Lluvia: {w['prob_lluvia']}", fill=0, font=font_reg)
+        draw.text((x, 505), f"Total: {w['mm_sum']}", fill=0, font=font_reg)
+
+    img.save("dashboard.png")
+
+if __name__ == "__main__":
+    draw_dashboard()
