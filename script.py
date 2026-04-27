@@ -107,7 +107,7 @@ def draw_dashboard():
         font_reg = ImageFont.truetype("Roboto-Regular.ttf", 20)
         font_small = ImageFont.truetype("Roboto-Regular.ttf", 15)
     except:
-        font_huge = font_big = font_med = font_reg = ImageFont.load_default()
+        font_huge = font_big = font_med = font_reg = font_small = ImageFont.load_default()
 
     # --- CABECERA ---
     draw.rectangle([0, 0, 800, 45], fill=0)
@@ -121,37 +121,37 @@ def draw_dashboard():
         draw.text((x+20, 80), e['nombre'].upper(), fill=0, font=font_reg)
         draw.text((x+20, 110), e['temp'], fill=0, font=font_huge)
         
-        # Si NO es la CALLE, dibujamos el CO2
-        if e['nombre'] != "KALEA":
+        # Limpiar CO2 en CALLE de forma segura
+        if "CALLE" not in e['nombre'].upper():
             draw.text((x+20, 205), f"CO2: {e['co2']} ppm", fill=0, font=font_reg)
             draw.rectangle([x+20, 230, x+220, 235], outline=0)
             co2_val = int(e['co2']) if e['co2'].isdigit() else 400
             bar_width = min(int((co2_val/1500) * 200), 200)
             draw.rectangle([x+20, 230, x+20+bar_width, 235], fill=0)
             
-        # La humedad sí la dejamos para todos
-        y_hum = 250 if e['nombre'] != "KALEA" else 205
+        # La humedad sí la dejamos para todos (ajustando la altura si es CALLE)
+        y_hum = 250 if "CALLE" not in e['nombre'].upper() else 205
         draw.text((x+20, y_hum), f"Hum: {e['hum']}", fill=0, font=font_reg)
 
-# --- BLOQUE TIEMPO: HORAS (Izquierda, 2 Columnas) ---
+    # --- BLOQUE TIEMPO: HORAS (Izquierda, 2 Columnas) ---
     draw.text((20, 320), "PRÓXIMAS 12 HORAS", fill=0, font=font_med)
-    draw.line([20, 350, 350, 350], fill=0, width=2)
+    draw.line([20, 350, 360, 350], fill=0, width=2) # Línea un poco más ancha
 
     for i, h in enumerate(hourly):
-        col = i // 6   # 0 para las primeras 6 horas, 1 para las siguientes
-        row = i % 6    # De 0 a 5 posiciones hacia abajo
+        col = i // 6   
+        row = i % 6    
         
-        x = 20 + (col * 170) # La segunda columna empieza en x=190
-        y = 365 + (row * 35) # Más juntitos (salto de 35px)
+        # Separamos más las dos columnas (180px en lugar de 170px)
+        x = 20 + (col * 180) 
+        y = 365 + (row * 35) 
         
-        # Acortamos el texto a 3 letras (SOL, NUB, LLU) para ahorrar espacio
         icono = get_weather_icon(h['code'])[:3] 
         
-        # Dibujamos los datos
+        # Aumentamos el espaciado horizontal interno
         draw.text((x, y), h['hora'], fill=0, font=font_reg)
-        draw.text((x + 50, y), icono, fill=0, font=font_small)
-        draw.text((x + 90, y), h['temp'], fill=0, font=font_reg)
-        draw.text((x + 125, y), h['prob_lluvia'], fill=0, font=font_small)
+        draw.text((x + 60, y), icono, fill=0, font=font_small)       # Antes era 50
+        draw.text((x + 100, y), h['temp'], fill=0, font=font_reg)    # Antes era 90
+        draw.text((x + 140, y), h['prob_lluvia'], fill=0, font=font_small) # Antes era 125
 
     # --- BLOQUE TIEMPO: PRÓXIMOS DÍAS (Derecha) ---
     draw.text((380, 320), "PRÓXIMOS DÍAS", fill=0, font=font_med)
