@@ -22,7 +22,7 @@ def get_weather_bilbao():
             "max": f"{int(daily['temperature_2m_max'][i])}°",
             "min": f"{int(daily['temperature_2m_min'][i])}°",
             "prob_lluvia": f"{daily['precipitation_probability_max'][i]}%",
-            "mm_sum": f"{daily['precipitation_sum'][i]}L", # ¡Importante!
+            "mm_sum": f"{daily['precipitation_sum'][i]}L",
             "code": daily['weather_code'][i]
         })
 
@@ -99,10 +99,11 @@ def draw_dashboard():
     draw = ImageDraw.Draw(img)
 
     try:
-        # --- AJUSTE TAMAÑO FUENTE ---
-        # Netatmo reducida de 115 a 105 para que no se salga
-        font_huge = ImageFont.truetype("Roboto-Bold.ttf", 105) 
-        font_big = ImageFont.truetype("Roboto-Bold.ttf", 55)  
+        # --- AJUSTES DE FUENTE ---
+        # Temperatura de Netatmo reducida a 100
+        font_huge = ImageFont.truetype("Roboto-Bold.ttf", 100) 
+        # Títulos de sección reducidos a 48
+        font_big = ImageFont.truetype("Roboto-Bold.ttf", 48)  
         font_med = ImageFont.truetype("Roboto-Bold.ttf", 35)  
         font_reg = ImageFont.truetype("Roboto-Regular.ttf", 28)
         font_small = ImageFont.truetype("Roboto-Regular.ttf", 22)
@@ -118,22 +119,16 @@ def draw_dashboard():
     # --- 2. BLOQUE NETATMO (Superior) ---
     for i, e in enumerate(netatmo[:3]):
         x = 30 + (i * 345)
-        # Recuadro con borde más grueso (width=5)
         draw.rounded_rectangle([x, 110, x+325, 410], radius=25, outline=0, width=5)
         draw.text((x+25, 130), e['nombre'], fill=0, font=font_med)
-        
-        # Temperatura con la nueva fuente ajustada
         draw.text((x+25, 175), e['temp'], fill=0, font=font_huge)
         
         if "CALLE" not in e['nombre']:
             draw.text((x+25, 310), f"CO2: {e['co2']} ppm", fill=0, font=font_reg)
-            # Barra CO2 visual
             draw.rectangle([x+25, 350, x+300, 362], outline=0, width=2)
             co2_val = int(e['co2']) if e['co2'].isdigit() else 400
-            # Escala de CO2 dinámica (empieza en 400ppm)
             bar_w = min(int(((co2_val-400)/1200) * 275), 275)
-            if bar_w > 0:
-                draw.rectangle([x+25, 350, x+25+bar_w, 362], fill=0)
+            if bar_w > 0: draw.rectangle([x+25, 350, x+25+bar_w, 362], fill=0)
         
         draw.text((x+25, 370), f"Humedad: {e['hum']}", fill=0, font=font_small)
 
@@ -147,20 +142,14 @@ def draw_dashboard():
         x_base = 30 + (col * 520)
         y = 525 + (row * 50)
         
-        # --- AJUSTE DE COLUMNAS PARA EVITAR SOLAPE ---
-        # Hora y temperatura bien separadas
         draw.text((x_base, y), h['hora'], fill=0, font=font_med)
         draw.text((x_base+120, y), h['temp'], fill=0, font=font_med)
-        
-        # Icono NUB/LLU con fuente regular para no solapar
         icono = get_weather_icon(h['code'])[:3]
         draw.text((x_base+220, y), icono, fill=0, font=font_reg)
-        
-        # Probabilidad y litros con la nueva separación
         texto_lluvia = f"{h['prob_lluvia']} ({h['mm']}L)"
         draw.text((x_base+320, y), texto_lluvia, fill=0, font=font_reg)
 
-   # --- 4. PREVISIÓN DIARIA (Inferior) ---
+    # --- 4. PREVISIÓN DIARIA (Inferior) ---
     draw.line([0, 930, WIDTH, 930], fill=0, width=3)
     draw.text((30, 940), "PRÓXIMOS DÍAS", fill=0, font=font_big)
 
@@ -170,17 +159,11 @@ def draw_dashboard():
         fecha_obj = datetime.datetime.strptime(w['fecha'], '%Y-%m-%d')
         dia = ["LUNES", "MARTES", "MIÉRC.", "JUEVES", "VIERN.", "SÁB.", "DOM."][fecha_obj.weekday()]
         
-        # Nombre del día e icono
         draw.text((x, y_base), dia, fill=0, font=font_med)
         draw.text((x + 160, y_base + 5), get_weather_icon(w['code'])[:3], fill=0, font=font_small)
-        
-        # Temperatura Max / Min
         draw.text((x, y_base + 45), f"{w['max']} / {w['min']}", fill=0, font=font_big)
-        
-        # Lluvia total acumulada
         draw.text((x, y_base + 105), f"Lluvia total: {w['mm_sum']}", fill=0, font=font_small)
 
-    # ESTA LÍNEA DEBE TENER LA MISMA SANGRÍA QUE EL 'FOR'
     img.save("dashboard.png")
 
 if __name__ == "__main__":
