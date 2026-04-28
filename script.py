@@ -158,10 +158,10 @@ def draw_dashboard():
         draw.text((x + 160, y_text + 5), get_weather_icon(w['code']), fill=0, font=font_small)
         
         # Temperatura diaria con fuente reducida (font_daily_temp)
-        draw.text((x, y_text + 50), f"{w['max']} / {w['min']}", fill=0, font=font_daily_temp)
+        draw.text((x, y_text + 50), f"{w['max']} / {w['min']}", fill=0, font=font_med)
         
         # Lluvia total más compacta
-        draw.text((x, y_text + 105), f"Lluvia: {w['mm_sum']}", fill=0, font=font_small)
+        draw.text((x, y_text + 105), f"Lluvia: {w['mm_sum']}", fill=0, font=font_med)
 
     img.save("dashboard.png")
 
