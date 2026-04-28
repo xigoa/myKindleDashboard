@@ -5,11 +5,13 @@ import requests
 from PIL import Image, ImageDraw, ImageFont
 
 # --- CONFIGURACIÓN ---
-# Ampliamos el ancho: 40px + 1072px + 40px = 1152px
-WIDTH, HEIGHT = 1152, 1072 
+# Ancho: 80 (izq) + 1072 (centro) + 80 (der) = 1232px
+# Alto: 1072px + 40px (abajo) = 1112px
+WIDTH, HEIGHT = 1232, 1112 
 LAT_BILBAO = 43.2627
 LON_BILBAO = -2.9253
-MARCO = 40 # Marco de 40 píxeles
+MARCO_LATERAL = 80
+MARCO_ABAJO = 40
 
 def get_weather_bilbao():
     url = f"https://api.open-meteo.com/v1/forecast?latitude={LAT_BILBAO}&longitude={LON_BILBAO}&hourly=temperature_2m,precipitation_probability,precipitation,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum&timezone=Europe%2FBerlin"
@@ -107,21 +109,21 @@ def draw_dashboard():
     except:
         font_huge = font_big = font_med = font_reg = font_small = ImageFont.load_default()
 
-    # --- 0. DIBUJAR MARCO (Laterales y Abajo) ---
-    draw.rectangle([0, 0, MARCO, HEIGHT], fill=0) # Izquierda
-    draw.rectangle([WIDTH-MARCO, 0, WIDTH, HEIGHT], fill=0) # Derecha
-    draw.rectangle([0, HEIGHT-MARCO, WIDTH, HEIGHT], fill=0) # Abajo
+    # --- 0. DIBUJAR MARCO ---
+    draw.rectangle([0, 0, MARCO_LATERAL, HEIGHT], fill=0) # Izquierda
+    draw.rectangle([WIDTH-MARCO_LATERAL, 0, WIDTH, HEIGHT], fill=0) # Derecha
+    draw.rectangle([0, HEIGHT-MARCO_ABAJO, WIDTH, HEIGHT], fill=0) # Abajo
 
-    # --- 1. CABECERA ---
+    # --- 1. CABECERA (Negra a todo lo ancho) ---
     draw.rectangle([0, 0, WIDTH, 90], fill=0)
     zona_bilbao = pytz.timezone('Europe/Madrid')
     ahora_dt = datetime.datetime.now(zona_bilbao)
     ahora_str = ahora_dt.strftime("%d %b  |  %H:%M")
-    draw.text((MARCO + 30, 20), f"BILBAO - {ahora_str}", fill=255, font=font_big)
+    draw.text((MARCO_LATERAL + 30, 20), f"BILBAO - {ahora_str}", fill=255, font=font_big)
 
     # --- 2. BLOQUE NETATMO ---
     for i, e in enumerate(netatmo[:3]):
-        x = MARCO + 30 + (i * 345)
+        x = MARCO_LATERAL + 30 + (i * 345)
         draw.rounded_rectangle([x, 110, x+325, 380], radius=25, outline=0, width=5)
         draw.text((x+25, 125), e['nombre'], fill=0, font=font_med)
         draw.text((x+25, 165), e['temp'], fill=0, font=font_huge)
@@ -135,12 +137,12 @@ def draw_dashboard():
 
     # --- 3. PRÓXIMAS 16 HORAS ---
     y_sep_hourly = 410
-    draw.line([MARCO + 30, y_sep_hourly, WIDTH - MARCO - 30, y_sep_hourly], fill=0, width=4)
+    draw.line([MARCO_LATERAL + 30, y_sep_hourly, WIDTH - MARCO_LATERAL - 30, y_sep_hourly], fill=0, width=4)
 
     for i, h in enumerate(hourly):
         col = i // 8
         row = i % 8
-        x_base = MARCO + 30 + (col * 520)
+        x_base = MARCO_LATERAL + 30 + (col * 520)
         y = y_sep_hourly + 20 + (row * 50)
         
         draw.text((x_base, y), h['hora'], fill=0, font=font_med)
@@ -152,10 +154,10 @@ def draw_dashboard():
 
     # --- 4. PREVISIÓN DIARIA ---
     y_sep_daily = 840
-    draw.line([MARCO, y_sep_daily, WIDTH - MARCO, y_sep_daily], fill=0, width=4)
+    draw.line([MARCO_LATERAL, y_sep_daily, WIDTH - MARCO_LATERAL, y_sep_daily], fill=0, width=4)
 
     for i, w in enumerate(daily):
-        x = MARCO + 35 + (i * 345)
+        x = MARCO_LATERAL + 35 + (i * 345)
         y_text = y_sep_daily + 25
         fecha_obj = datetime.datetime.strptime(w['fecha'], '%Y-%m-%d')
         dia = ["ASTELEH", "ASTEART", "ASTEAZK", "OSTEGUN", "OSTIRAL", "LARUNBAT", "IGANDE"][fecha_obj.weekday()]
