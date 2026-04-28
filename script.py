@@ -165,20 +165,21 @@ def draw_dashboard():
     draw.line([0, 930, WIDTH, 930], fill=0, width=3)
     draw.text((30, 940), "PRÓXIMOS DÍAS", fill=0, font=font_big)
 
-    for i, w in enumerate(daily):
+for i, w in enumerate(daily):
         x = 35 + (i * 345)
         y_base = 1000
         fecha_obj = datetime.datetime.strptime(w['fecha'], '%Y-%m-%d')
         dia = ["LUNES", "MARTES", "MIÉRC.", "JUEVES", "VIERN.", "SÁB.", "DOM."][fecha_obj.weekday()]
         
-        # Diseño compacto pero completo para los días
+        # Dibujamos el nombre del día y el icono pequeño al lado
         draw.text((x, y_base), dia, fill=0, font=font_med)
-        draw.text((x+150, y_base), get_weather_icon(w['code'])[:3], fill=0, font=font_small)
-        draw.text((x, y_base+45), f"{w['max']} / {w['min']}", fill=0, font=font_big)
+        draw.text((x + 160, y_base + 5), get_weather_icon(w['code'])[:3], fill=0, font=font_small)
         
-        # ¡ARREGLO: Añadir total de lluvia aquí!
-        # Ajustamos posición para que quepa bien
-         draw.text((x+220, y_base+70), f"({w['mm_sum']})", fill=0, font=font_small)
+        # Temperatura Max/Min
+        draw.text((x, y_base + 45), f"{w['max']} / {w['min']}", fill=0, font=font_big)
+        
+        # Lluvia acumulada debajo de la temperatura
+        draw.text((x, y_base + 105), f"Lluvia total: {w['mm_sum']}", fill=0, font=font_small)
 
     img.save("dashboard.png")
 
