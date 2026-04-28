@@ -112,14 +112,15 @@ def draw_dashboard():
     # --- CABECERA ---
     # Dibujar la cabecera
     draw.rectangle([0, 0, 800, 45], fill=0)
-    
-    # Definir la zona horaria y obtener la hora
+
+    # La forma correcta de obtener la hora con zona horaria:
     zona_bilbao = pytz.timezone('Europe/Madrid')
-    # Usamos datetime.datetime.now() pasando la zona horaria directamente
+    # Usamos datetime.datetime.now para evitar el AttributeError
     ahora_dt = datetime.datetime.now(zona_bilbao)
     ahora_str = ahora_dt.strftime("%d %b | %H:%M")
     
     draw.text((20, 10), f"BILBAO - {ahora_str}", fill=255, font=font_med)
+
 
     # --- BLOQUE NETATMO (COMPRIMIDO) ---
     for i, e in enumerate(netatmo):
