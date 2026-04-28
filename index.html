@@ -8,67 +8,61 @@
         body { 
             margin: 0; 
             padding: 0; 
-            background: black; 
-            overflow: hidden; /* Evita que aparezcan barras de scroll */
+            background: #000000; 
+            overflow: hidden; 
             display: flex;
-            justify-content: flex-start; /* Pega la imagen al borde (que será el superior al tumbarlo) */
+            justify-content: flex-start; 
             align-items: center; 
             height: 100vh;
             width: 100vw;
+            transition: background-color 0.1s; /* Suaviza el micro-cambio de color */
         }
         
         img {
-            height: 100%; /* Obliga a la imagen a ocupar todo el alto del navegador */
+            height: 100%; 
             width: auto;
             display: block;
         }
     </style>
-    </head>
+</head>
 <body>
 
     <img id="dashboard" src="" alt="Cargando Bilbao...">
 
     <script>
+        // 1. FUNCIÓN PRINCIPAL DE DIBUJO
         function updateImage() {
             var timestamp = new Date().getTime();
-            // Recuerda: &ro=90 gira la imagen para que encaje al tumbar el Kindle
             var baseUrl = "https://images.weserv.nl/?url=raw.githubusercontent.com/xigoa/myKindleDashboard/main/dashboard.png";
             var params = "&ro=90&nocache=1&t=" + timestamp;
             
             document.getElementById('dashboard').src = baseUrl + params;
+            console.log("Imagen actualizada: " + timestamp);
         }
 
+        // Carga la imagen la primera vez
         updateImage();
 
-        // Función para evitar que el navegador se "duerma"
+        // Refresco elegante: actualiza SOLO la imagen cada 10 minutos (600000 ms)
+        setInterval(updateImage, 600000); 
+
+        // 2. HACK ANTI-SUEÑO (Modo Visual + Red)
+        var toggle = false;
+        
         function stayAwake() {
-            // Hace un scroll mínimo de 1 píxel y vuelve
-            window.scrollBy(0, 1);
-            window.scrollBy(0, -1);
+            // A. Cambio visual invisible (fuerza al renderizador a trabajar)
+            document.body.style.backgroundColor = toggle ? "#010101" : "#000000";
+            toggle = !toggle;
             
-            // Imprime algo en la consola invisible
-            console.log("Keep alive: " + new Date().getTime());
+            // B. Petición fantasma para mantener la antena WiFi despierta
+            var xhr = new XMLHttpRequest();
+            // Pedimos la propia URL en la que estamos con un parámetro falso
+            xhr.open('GET', window.location.href.split('?')[0] + '?dummy=' + new Date().getTime(), true);
+            xhr.send();
         }
         
-        // Ejecutar cada 30 segundos
+        // Ejecutar el latido anti-sueño cada 30 segundos
         setInterval(stayAwake, 30000);
-
-        // Forzar al navegador a creer que hay una descarga pesada en curso
-        function fakeActivity() {
-            var xhr = new XMLHttpRequest();
-            // Pedimos la propia imagen con un parámetro aleatorio para que no use caché
-            xhr.open('GET', 'dashboard.png?dummy=' + Math.random(), true);
-            xhr.send();
-            console.log("Actividad simulada para evitar sleep");
-        }
-
-        // Ejecutar cada 45 segundos (antes de que salte el timeout del Kindle)
-        setInterval(fakeActivity, 30000);
-
-        // Refresco cada 10 minutos
-        setTimeout(function(){ 
-            location.reload(true); 
-        }, 600000);
     </script>
 </body>
 </html>
