@@ -5,7 +5,7 @@ import requests
 from PIL import Image, ImageDraw, ImageFont
 
 # --- CONFIGURACIÓN ---
-WIDTH, HEIGHT = 940, 1072
+WIDTH, HEIGHT = 1072, 1072
 LAT_BILBAO = 43.2627
 LON_BILBAO = -2.9253
 
