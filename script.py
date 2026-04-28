@@ -1,5 +1,6 @@
 import os
 import datetime
+import pytz
 import requests
 from PIL import Image, ImageDraw, ImageFont
 
