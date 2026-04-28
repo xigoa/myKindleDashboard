@@ -5,12 +5,12 @@ import requests
 from PIL import Image, ImageDraw, ImageFont
 
 # --- CONFIGURACIÓN ---
-# Ancho: 80 (izq) + 1072 (centro) + 80 (der) = 1232px
+# Ancho: 100 (izq) + 1072 (centro) + 100 (der) = 1272px
 # Alto: 1072px + 40px (abajo) = 1112px
-WIDTH, HEIGHT = 1232, 1112 
+WIDTH, HEIGHT = 1272, 1112 
 LAT_BILBAO = 43.2627
 LON_BILBAO = -2.9253
-MARCO_LATERAL = 80
+MARCO_LATERAL = 100
 MARCO_ABAJO = 40
 
 def get_weather_bilbao():
@@ -114,7 +114,7 @@ def draw_dashboard():
     draw.rectangle([WIDTH-MARCO_LATERAL, 0, WIDTH, HEIGHT], fill=0) # Derecha
     draw.rectangle([0, HEIGHT-MARCO_ABAJO, WIDTH, HEIGHT], fill=0) # Abajo
 
-    # --- 1. CABECERA (Negra a todo lo ancho) ---
+    # --- 1. CABECERA ---
     draw.rectangle([0, 0, WIDTH, 90], fill=0)
     zona_bilbao = pytz.timezone('Europe/Madrid')
     ahora_dt = datetime.datetime.now(zona_bilbao)
