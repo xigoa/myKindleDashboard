@@ -53,6 +53,18 @@
         // Ejecutar cada 30 segundos
         setInterval(stayAwake, 30000);
 
+        // Forzar al navegador a creer que hay una descarga pesada en curso
+        function fakeActivity() {
+            var xhr = new XMLHttpRequest();
+            // Pedimos la propia imagen con un parámetro aleatorio para que no use caché
+            xhr.open('GET', 'dashboard.png?dummy=' + Math.random(), true);
+            xhr.send();
+            console.log("Actividad simulada para evitar sleep");
+        }
+
+        // Ejecutar cada 45 segundos (antes de que salte el timeout del Kindle)
+        setInterval(fakeActivity, 30000);
+
         // Refresco cada 10 minutos
         setTimeout(function(){ 
             location.reload(true); 
