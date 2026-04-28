@@ -13,7 +13,6 @@ def get_weather_bilbao():
     url = f"https://api.open-meteo.com/v1/forecast?latitude={LAT_BILBAO}&longitude={LON_BILBAO}&hourly=temperature_2m,precipitation_probability,precipitation,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum&timezone=Europe%2FBerlin"
     data = requests.get(url).json()
     
-    # 1. PRONÓSTICO DIARIO (Próximos 3 días)
     daily = data['daily']
     forecast_daily = []
     for i in range(1, 4): 
@@ -26,7 +25,6 @@ def get_weather_bilbao():
             "code": daily['weather_code'][i]
         })
 
-    # 2. PRONÓSTICO POR HORAS (16 horas)
     hourly = data['hourly']
     zona_bilbao = pytz.timezone('Europe/Madrid')
     now_local = datetime.datetime.now(zona_bilbao)
@@ -52,10 +50,10 @@ def get_weather_bilbao():
     return forecast_hourly, forecast_daily
 
 def get_weather_icon(code):
-    if code == 0: return "DESPEJADO"
-    if code in [1, 2, 3]: return "NUBES"
-    if code in [51, 53, 55, 61, 63, 65, 80, 81, 82]: return "LLUVIA"
-    return "VARIO"
+    if code == 0: return "SOL"
+    if code in [1, 2, 3]: return "NUB"
+    if code in [51, 53, 55, 61, 63, 65, 80, 81, 82]: return "LLU"
+    return "VAR"
 
 def get_netatmo_data():
     try:
@@ -100,11 +98,10 @@ def draw_dashboard():
 
     try:
         # --- AJUSTES DE FUENTE ---
-        # Temperatura de Netatmo reducida a 100
-        font_huge = ImageFont.truetype("Roboto-Bold.ttf", 100) 
-        # Títulos de sección reducidos a 48
-        font_big = ImageFont.truetype("Roboto-Bold.ttf", 48)  
-        font_med = ImageFont.truetype("Roboto-Bold.ttf", 35)  
+        font_huge = ImageFont.truetype("Roboto-Bold.ttf", 95)   # Netatmo algo más pequeña
+        font_big = ImageFont.truetype("Roboto-Bold.ttf", 48)    # Título cabecera
+        font_daily_temp = ImageFont.truetype("Roboto-Bold.ttf", 42) # Temp diaria reducida
+        font_med = ImageFont.truetype("Roboto-Bold.ttf", 35)    
         font_reg = ImageFont.truetype("Roboto-Regular.ttf", 28)
         font_small = ImageFont.truetype("Roboto-Regular.ttf", 22)
     except:
@@ -116,53 +113,55 @@ def draw_dashboard():
     ahora_str = datetime.datetime.now(zona_bilbao).strftime("%d %b  |  %H:%M")
     draw.text((30, 20), f"BILBAO - {ahora_str}", fill=255, font=font_big)
 
-    # --- 2. BLOQUE NETATMO (Superior) ---
+    # --- 2. BLOQUE NETATMO ---
     for i, e in enumerate(netatmo[:3]):
         x = 30 + (i * 345)
-        draw.rounded_rectangle([x, 110, x+325, 410], radius=25, outline=0, width=5)
-        draw.text((x+25, 130), e['nombre'], fill=0, font=font_med)
-        draw.text((x+25, 175), e['temp'], fill=0, font=font_huge)
-        
+        draw.rounded_rectangle([x, 110, x+325, 380], radius=25, outline=0, width=5)
+        draw.text((x+25, 125), e['nombre'], fill=0, font=font_med)
+        draw.text((x+25, 165), e['temp'], fill=0, font=font_huge)
         if "CALLE" not in e['nombre']:
-            draw.text((x+25, 310), f"CO2: {e['co2']} ppm", fill=0, font=font_reg)
-            draw.rectangle([x+25, 350, x+300, 362], outline=0, width=2)
+            draw.text((x+25, 290), f"CO2: {e['co2']} ppm", fill=0, font=font_reg)
+            draw.rectangle([x+25, 330, x+300, 342], outline=0, width=2)
             co2_val = int(e['co2']) if e['co2'].isdigit() else 400
             bar_w = min(int(((co2_val-400)/1200) * 275), 275)
-            if bar_w > 0: draw.rectangle([x+25, 350, x+25+bar_w, 362], fill=0)
-        
-        draw.text((x+25, 370), f"Humedad: {e['hum']}", fill=0, font=font_small)
+            if bar_w > 0: draw.rectangle([x+25, 330, x+25+bar_w, 342], fill=0)
+        draw.text((x+25, 348), f"Humedad: {e['hum']}", fill=0, font=font_small)
 
-    # --- 3. PRÓXIMAS 16 HORAS (Centro) ---
-    draw.text((30, 440), "PRÓXIMAS 16 HORAS", fill=0, font=font_big)
-    draw.line([30, 505, 1042, 505], fill=0, width=4)
+    # --- 3. PRÓXIMAS 16 HORAS (Título quitado, solo línea) ---
+    y_sep_hourly = 410
+    draw.line([30, y_sep_hourly, 1042, y_sep_hourly], fill=0, width=4)
 
     for i, h in enumerate(hourly):
         col = i // 8
         row = i % 8
         x_base = 30 + (col * 520)
-        y = 525 + (row * 50)
+        y = y_sep_hourly + 20 + (row * 50)
         
         draw.text((x_base, y), h['hora'], fill=0, font=font_med)
         draw.text((x_base+120, y), h['temp'], fill=0, font=font_med)
-        icono = get_weather_icon(h['code'])[:3]
+        icono = get_weather_icon(h['code'])
         draw.text((x_base+220, y), icono, fill=0, font=font_reg)
         texto_lluvia = f"{h['prob_lluvia']} ({h['mm']}L)"
         draw.text((x_base+320, y), texto_lluvia, fill=0, font=font_reg)
 
-    # --- 4. PREVISIÓN DIARIA (Inferior) ---
-    draw.line([0, 930, WIDTH, 930], fill=0, width=3)
-    draw.text((30, 940), "PRÓXIMOS DÍAS", fill=0, font=font_big)
+    # --- 4. PREVISIÓN DIARIA (Título quitado, solo línea) ---
+    y_sep_daily = 840
+    draw.line([0, y_sep_daily, WIDTH, y_sep_daily], fill=0, width=4)
 
     for i, w in enumerate(daily):
         x = 35 + (i * 345)
-        y_base = 1000
+        y_text = y_sep_daily + 25
         fecha_obj = datetime.datetime.strptime(w['fecha'], '%Y-%m-%d')
         dia = ["LUNES", "MARTES", "MIÉRC.", "JUEVES", "VIERN.", "SÁB.", "DOM."][fecha_obj.weekday()]
         
-        draw.text((x, y_base), dia, fill=0, font=font_med)
-        draw.text((x + 160, y_base + 5), get_weather_icon(w['code'])[:3], fill=0, font=font_small)
-        draw.text((x, y_base + 45), f"{w['max']} / {w['min']}", fill=0, font=font_big)
-        draw.text((x, y_base + 105), f"Lluvia total: {w['mm_sum']}", fill=0, font=font_small)
+        draw.text((x, y_text), dia, fill=0, font=font_med)
+        draw.text((x + 160, y_text + 5), get_weather_icon(w['code']), fill=0, font=font_small)
+        
+        # Temperatura diaria con fuente reducida (font_daily_temp)
+        draw.text((x, y_text + 50), f"{w['max']} / {w['min']}", fill=0, font=font_daily_temp)
+        
+        # Lluvia total más compacta
+        draw.text((x, y_text + 105), f"Lluvia: {w['mm_sum']}", fill=0, font=font_small)
 
     img.save("dashboard.png")
 
