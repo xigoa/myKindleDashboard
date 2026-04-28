@@ -40,6 +40,19 @@
 
         updateImage();
 
+        // Función para evitar que el navegador se "duerma"
+        function stayAwake() {
+            // Hace un scroll mínimo de 1 píxel y vuelve
+            window.scrollBy(0, 1);
+            window.scrollBy(0, -1);
+            
+            // Imprime algo en la consola invisible
+            console.log("Keep alive: " + new Date().getTime());
+        }
+        
+        // Ejecutar cada 30 segundos
+        setInterval(stayAwake, 30000);
+
         // Refresco cada 10 minutos
         setTimeout(function(){ 
             location.reload(true); 
