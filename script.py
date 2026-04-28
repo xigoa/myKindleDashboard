@@ -160,27 +160,27 @@ def draw_dashboard():
         texto_lluvia = f"{h['prob_lluvia']} ({h['mm']}L)"
         draw.text((x_base+320, y), texto_lluvia, fill=0, font=font_reg)
 
-    # --- 4. PREVISIÓN DIARIA (Inferior) ---
-    # Línea de separación y título
+   # --- 4. PREVISIÓN DIARIA (Inferior) ---
     draw.line([0, 930, WIDTH, 930], fill=0, width=3)
     draw.text((30, 940), "PRÓXIMOS DÍAS", fill=0, font=font_big)
 
-for i, w in enumerate(daily):
+    for i, w in enumerate(daily):
         x = 35 + (i * 345)
         y_base = 1000
         fecha_obj = datetime.datetime.strptime(w['fecha'], '%Y-%m-%d')
         dia = ["LUNES", "MARTES", "MIÉRC.", "JUEVES", "VIERN.", "SÁB.", "DOM."][fecha_obj.weekday()]
         
-        # Dibujamos el nombre del día y el icono pequeño al lado
+        # Nombre del día e icono
         draw.text((x, y_base), dia, fill=0, font=font_med)
         draw.text((x + 160, y_base + 5), get_weather_icon(w['code'])[:3], fill=0, font=font_small)
         
-        # Temperatura Max/Min
+        # Temperatura Max / Min
         draw.text((x, y_base + 45), f"{w['max']} / {w['min']}", fill=0, font=font_big)
         
-        # Lluvia acumulada debajo de la temperatura
+        # Lluvia total acumulada
         draw.text((x, y_base + 105), f"Lluvia total: {w['mm_sum']}", fill=0, font=font_small)
 
+    # ESTA LÍNEA DEBE TENER LA MISMA SANGRÍA QUE EL 'FOR'
     img.save("dashboard.png")
 
 if __name__ == "__main__":
