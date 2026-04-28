@@ -1,5 +1,38 @@
-<meta http-equiv="refresh" content="360"> <style>
-  body { margin: 0; background: black; display: flex; justify-content: center; align-items: center; height: 100vh; }
-  img { max-width: 100%; max-height: 100%; object-fit: contain; }
-</style>
-<img src="https://images.weserv.nl/?url=raw.githubusercontent.com/xigoa/myKindleDashboard/main/dashboard.png&output=png&nocache=1">
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="refresh" content="600">
+    <style>
+        body { 
+            margin: 0; 
+            background: black; 
+            overflow: hidden; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            width: 100vw;
+        }
+        img { 
+            /* Rotamos la imagen y la ajustamos al tamaño de la pantalla */
+            transform: rotate(90deg); 
+            transform-origin: center; 
+            /* En rotación de 90, el ancho de la imagen es el alto de la pantalla */
+            width: 100vh; 
+            height: 100vw; 
+            object-fit: contain; 
+        }
+    </style>
+</head>
+<body>
+    <img src="https://images.weserv.nl/?url=raw.githubusercontent.com/xigoa/myKindleDashboard/main/dashboard.png&output=png&nocache=1" 
+         id="dashboard">
+
+    <script>
+        // Este script es un refuerzo al meta-refresh para asegurar que no se quede colgado
+        setTimeout(function(){ 
+            location.reload(true); 
+        }, 600000); // 600.000 ms = 10 minutos
+    </script>
+</body>
+</html>
