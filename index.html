@@ -2,29 +2,45 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <title>Bilbao Dashboard</title>
+    
     <style>
-        body { margin: 0; background: black; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; overflow: hidden; }
-        img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        body { 
+            margin: 0; 
+            padding: 0; 
+            background: black; 
+            overflow: hidden; /* Evita que aparezcan barras de scroll */
+            display: flex;
+            justify-content: flex-start; /* Pega la imagen al borde (que será el superior al tumbarlo) */
+            align-items: center; 
+            height: 100vh;
+            width: 100vw;
+        }
+        
+        img {
+            height: 100%; /* Obliga a la imagen a ocupar todo el alto del navegador */
+            width: auto;
+            display: block;
+        }
     </style>
-</head>
+    </head>
 <body>
+
     <img id="dashboard" src="" alt="Cargando Bilbao...">
 
     <script>
         function updateImage() {
-            // Generamos un número único basado en la hora actual
             var timestamp = new Date().getTime();
-            // Construimos la URL con el parámetro 't' que cambia siempre
+            // Recuerda: &ro=90 gira la imagen para que encaje al tumbar el Kindle
             var baseUrl = "https://images.weserv.nl/?url=raw.githubusercontent.com/xigoa/myKindleDashboard/main/dashboard.png";
             var params = "&ro=90&nocache=1&t=" + timestamp;
             
             document.getElementById('dashboard').src = baseUrl + params;
         }
 
-        // Ejecutar la carga inicial
         updateImage();
 
-        // Recargar la página completa cada 10 minutos (600.000 ms)
+        // Refresco cada 10 minutos
         setTimeout(function(){ 
             location.reload(true); 
         }, 600000);
