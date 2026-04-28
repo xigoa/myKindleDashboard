@@ -5,9 +5,11 @@ import requests
 from PIL import Image, ImageDraw, ImageFont
 
 # --- CONFIGURACIÓN ---
-WIDTH, HEIGHT = 1072, 1072
+# Ampliamos el ancho para que quepa el marco (20px + 1072px + 20px)
+WIDTH, HEIGHT = 1112, 1072 
 LAT_BILBAO = 43.2627
 LON_BILBAO = -2.9253
+MARCO = 20 # Grosor del marco lateral y de abajo
 
 def get_weather_bilbao():
     url = f"https://api.open-meteo.com/v1/forecast?latitude={LAT_BILBAO}&longitude={LON_BILBAO}&hourly=temperature_2m,precipitation_probability,precipitation,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum&timezone=Europe%2FBerlin"
@@ -97,29 +99,33 @@ def draw_dashboard():
     draw = ImageDraw.Draw(img)
 
     try:
-        # --- AJUSTES DE FUENTE ---
-        font_huge = ImageFont.truetype("Roboto-Bold.ttf", 95)   # Netatmo algo más pequeña
-        font_big = ImageFont.truetype("Roboto-Bold.ttf", 48)    # Título cabecera
-        font_daily_temp = ImageFont.truetype("Roboto-Bold.ttf", 42) # Temp diaria reducida
-        font_med = ImageFont.truetype("Roboto-Bold.ttf", 35)    
+        font_huge = ImageFont.truetype("Roboto-Bold.ttf", 95)
+        font_big = ImageFont.truetype("Roboto-Bold.ttf", 48)
+        font_med = ImageFont.truetype("Roboto-Bold.ttf", 35)
         font_reg = ImageFont.truetype("Roboto-Regular.ttf", 28)
         font_small = ImageFont.truetype("Roboto-Regular.ttf", 22)
     except:
         font_huge = font_big = font_med = font_reg = font_small = ImageFont.load_default()
 
-    # --- 1. CABECERA ---
+    # --- 0. DIBUJAR MARCO (Laterales y Abajo) ---
+    draw.rectangle([0, 0, MARCO, HEIGHT], fill=0) # Izquierda
+    draw.rectangle([WIDTH-MARCO, 0, WIDTH, HEIGHT], fill=0) # Derecha
+    draw.rectangle([0, HEIGHT-MARCO, WIDTH, HEIGHT], fill=0) # Abajo
+
+    # --- 1. CABECERA (Ajustada al ancho total) ---
     draw.rectangle([0, 0, WIDTH, 90], fill=0)
     zona_bilbao = pytz.timezone('Europe/Madrid')
-    ahora_str = datetime.datetime.now(zona_bilbao).strftime("%d %b  |  %H:%M")
-    draw.text((30, 20), f"BILBAO - {ahora_str}", fill=255, font=font_big)
+    ahora_dt = datetime.datetime.now(zona_bilbao)
+    ahora_str = ahora_dt.strftime("%d %b  |  %H:%M")
+    draw.text((MARCO + 30, 20), f"BILBAO - {ahora_str}", fill=255, font=font_big)
 
-    # --- 2. BLOQUE NETATMO ---
+    # --- 2. BLOQUE NETATMO (Desplazado MARCO px a la derecha) ---
     for i, e in enumerate(netatmo[:3]):
-        x = 30 + (i * 345)
+        x = MARCO + 30 + (i * 345)
         draw.rounded_rectangle([x, 110, x+325, 380], radius=25, outline=0, width=5)
         draw.text((x+25, 125), e['nombre'], fill=0, font=font_med)
         draw.text((x+25, 165), e['temp'], fill=0, font=font_huge)
-        if "CALLE" not in e['nombre']:
+        if "KALEA" not in e['nombre']: # Cambiado a KALEA para coincidir con tu literal
             draw.text((x+25, 290), f"CO2: {e['co2']} ppm", fill=0, font=font_reg)
             draw.rectangle([x+25, 330, x+300, 342], outline=0, width=2)
             co2_val = int(e['co2']) if e['co2'].isdigit() else 400
@@ -127,14 +133,14 @@ def draw_dashboard():
             if bar_w > 0: draw.rectangle([x+25, 330, x+25+bar_w, 342], fill=0)
         draw.text((x+25, 348), f"Humedad: {e['hum']}", fill=0, font=font_small)
 
-    # --- 3. PRÓXIMAS 16 HORAS (Título quitado, solo línea) ---
+    # --- 3. PRÓXIMAS 16 HORAS (Línea ajustada) ---
     y_sep_hourly = 410
-    draw.line([30, y_sep_hourly, 1042, y_sep_hourly], fill=0, width=4)
+    draw.line([MARCO + 30, y_sep_hourly, WIDTH - MARCO - 30, y_sep_hourly], fill=0, width=4)
 
     for i, h in enumerate(hourly):
         col = i // 8
         row = i % 8
-        x_base = 30 + (col * 520)
+        x_base = MARCO + 30 + (col * 520)
         y = y_sep_hourly + 20 + (row * 50)
         
         draw.text((x_base, y), h['hora'], fill=0, font=font_med)
@@ -144,23 +150,22 @@ def draw_dashboard():
         texto_lluvia = f"{h['prob_lluvia']} ({h['mm']}L)"
         draw.text((x_base+320, y), texto_lluvia, fill=0, font=font_reg)
 
-    # --- 4. PREVISIÓN DIARIA (Título quitado, solo línea) ---
+    # --- 4. PREVISIÓN DIARIA (Ajustada) ---
     y_sep_daily = 840
-    draw.line([0, y_sep_daily, WIDTH, y_sep_daily], fill=0, width=4)
+    draw.line([MARCO, y_sep_daily, WIDTH - MARCO, y_sep_daily], fill=0, width=4)
 
     for i, w in enumerate(daily):
-        x = 35 + (i * 345)
+        x = MARCO + 35 + (i * 345)
         y_text = y_sep_daily + 25
         fecha_obj = datetime.datetime.strptime(w['fecha'], '%Y-%m-%d')
+        # Mantenemos tus literales en euskera
         dia = ["ASTELEH", "ASTEART", "ASTEAZK", "OSTEGUN", "OSTIRAL", "LARUNBAT", "IGANDE"][fecha_obj.weekday()]
         
         draw.text((x, y_text), dia, fill=0, font=font_med)
         draw.text((x + 160, y_text + 5), get_weather_icon(w['code']), fill=0, font=font_small)
         
-        # Temperatura diaria con fuente reducida (font_daily_temp)
         draw.text((x, y_text + 50), f"{w['max']} / {w['min']}", fill=0, font=font_med)
-        
-        # Lluvia total más compacta
+        # Literal "Euria" mantenido
         draw.text((x, y_text + 105), f"Euria: {w['mm_sum']}", fill=0, font=font_med)
 
     img.save("dashboard.png")
