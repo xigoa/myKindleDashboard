@@ -75,7 +75,7 @@ def get_netatmo_data():
         for e in estaciones:
             d = e.get('dashboard_data', {})
             nombre = e.get('module_name', 'Principal').upper()
-            nombre_limpio = nombre.replace("JONEN LOGELA", "JONEN").replace("EGONGELA", "SALÓN").replace("KALEA", "CALLE")
+            nombre_limpio = nombre.replace("JONEN LOGELA", "JONEN LOGELA").replace("EGONGELA", "EGONGELA").replace("KALEA", "KALEA")
             res_list.append({
                 "nombre": nombre_limpio,
                 "temp": f"{d.get('Temperature', '--')}°",
@@ -83,8 +83,8 @@ def get_netatmo_data():
                 "hum": f"{d.get('Humidity', '--')}%"
             })
             
-        calle = next((item for item in res_list if "CALLE" in item["nombre"]), None)
-        otros = [item for item in res_list if "CALLE" not in item["nombre"]]
+        calle = next((item for item in res_list if "KALEA" in item["nombre"]), None)
+        otros = [item for item in res_list if "KALEA" not in item["nombre"]]
         return ([calle] if calle else []) + otros
     except:
         return [{"nombre": "ERROR", "temp": "--", "co2": "400", "hum": "--"}] * 3
@@ -152,7 +152,7 @@ def draw_dashboard():
         x = 35 + (i * 345)
         y_text = y_sep_daily + 25
         fecha_obj = datetime.datetime.strptime(w['fecha'], '%Y-%m-%d')
-        dia = ["LUNES", "MARTES", "MIÉRC.", "JUEVES", "VIERN.", "SÁB.", "DOM."][fecha_obj.weekday()]
+        dia = ["ASTELEH", "ASTEART", "ASTEAZK", "OSTEGUN", "OSTIRAL", "LARUNBAT", "IGANDE"][fecha_obj.weekday()]
         
         draw.text((x, y_text), dia, fill=0, font=font_med)
         draw.text((x + 160, y_text + 5), get_weather_icon(w['code']), fill=0, font=font_small)
@@ -161,7 +161,7 @@ def draw_dashboard():
         draw.text((x, y_text + 50), f"{w['max']} / {w['min']}", fill=0, font=font_med)
         
         # Lluvia total más compacta
-        draw.text((x, y_text + 105), f"Lluvia: {w['mm_sum']}", fill=0, font=font_med)
+        draw.text((x, y_text + 105), f"Euria: {w['mm_sum']}", fill=0, font=font_med)
 
     img.save("dashboard.png")
 
