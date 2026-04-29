@@ -63,12 +63,6 @@ def get_weather_bilbao():
         
     return forecast_hourly, forecast_daily
 
-def get_weather_icon(code):
-    if code == 0: return "SOL"
-    if code in [1, 2, 3]: return "NUB"
-    if code in [51, 53, 55, 61, 63, 65, 80, 81, 82]: return "LLU"
-    return "VAR"
-
 def get_netatmo_data():
     try:
         token_url = "https://api.netatmo.com/oauth2/token"
@@ -113,6 +107,86 @@ def get_netatmo_data():
     except:
         return [{"nombre": "ERROR", "temp": "--", "co2": "400", "hum": "--"}] * 3
 
+def get_weather_icon(code):
+    """
+    Devuelve el icono Unicode (para una fuente de iconos del tiempo)
+    correspondiente a un código meteorológico WMO (0-99).
+
+    Códigos WMO: 
+    0: Despejado
+    1-3: Nubosidad variable
+    45, 48: Niebla
+    51-57: Llovizna
+    61-67: Lluvia
+    71-77: Nieve
+    80-82: Chaparrones
+    85-86: Chaparrones de nieve
+    95-99: Tormenta
+    """
+    try:
+        font_icons = ImageFont.truetype("weathericons-regular-webfont.ttf", 40)
+    except:
+        font_huge = font_big = font_med = font_reg = font_small = ImageFont.load_default()
+    
+    # 0: Despejado (SOL)
+    if code == 0:
+        return "\uf00d"  # Símbolo de Sol (\uf00d - sol despejado en Weather Icons)
+    
+    # 1: Principalmente despejado, 2: Nubes dispersas, 3: Nublado (NUBOSIDAD VARIABLE / NUBES Y SOL)
+    elif code == 1:
+        return "\uf00c"  # Principalmente despejado (\uf00c - pocas nubes sol en Weather Icons)
+    elif code == 2:
+        return "\uf002"  # Nubes dispersas (\uf002 - nubes sol en Weather Icons)
+    elif code == 3:
+        return "\uf013"  # Nublado (\uf013 - nublado en Weather Icons)
+
+    # 45: Niebla, 48: Niebla con escarcha (NIEBLA)
+    elif code in [45, 48]:
+        return "\uf014"  # Niebla (\uf014 - niebla en Weather Icons)
+
+    # 51: Llovizna ligera, 53: moderada, 55: densa, 56: Llovizna helada ligera, 57: densa (LLOVIZNA / ZIRIMIRI)
+    elif code in [51, 56]:
+        return "\uf019"  # Llovizna ligera (\uf019 - llovizna en Weather Icons)
+    elif code in [53, 55, 57]:
+        return "\uf01a"  # Llovizna moderada/fuerte (\uf01a - lluvia ligera en Weather Icons, más densa que llovizna)
+
+    # 61: Lluvia ligera, 63: moderada, 65: fuerte, 66: Lluvia helada ligera, 67: fuerte (LLUVIA / EURIA)
+    elif code in [61, 66]:
+        return "\uf01a"  # Lluvia ligera (\uf01a - lluvia ligera en Weather Icons)
+    elif code == 63:
+        return "\uf018"  # Lluvia moderada (\uf018 - lluvia en Weather Icons)
+    elif code in [65, 67]:
+        return "\uf01b"  # Lluvia fuerte (\uf01b - lluvia fuerte en Weather Icons)
+
+    # 71: Nieve ligera, 73: moderada, 75: fuerte, 77: Granos de nieve (NIEVE / ELURRA)
+    elif code in [71, 77]:
+        return "\uf01b"  # Nieve ligera (\uf01b - nieve ligera en Weather Icons)
+    elif code == 73:
+        return "\uf076"  # Nieve moderada (\uf076 - nieve en Weather Icons)
+    elif code == 75:
+        return "\uf064"  # Nieve fuerte (\uf064 - nieve fuerte en Weather Icons)
+
+    # 80: Chaparrones ligeros, 81: moderados, 82: violentos (CHAPARRONES / ZAPARRADA)
+    elif code == 80:
+        return "\uf01a"  # Chaparrones ligeros (\uf01a - lluvia ligera en Weather Icons, similar a chaparrón ligero)
+    elif code in [81, 82]:
+        return "\uf01b"  # Chaparrones moderados/fuertes (\uf01b - lluvia fuerte en Weather Icons)
+
+    # 85: Chaparrones de nieve ligeros, 86: fuertes (CHAPARRONES DE NIEVE / ELUR ZAPARRADA)
+    elif code == 85:
+        return "\uf064"  # Chaparrones de nieve ligeros (\uf064 - nieve ligera en Weather Icons, similar a chaparrón ligero nieve)
+    elif code == 86:
+        return "\uf064"  # Chaparrones de nieve fuertes (\uf064 - nieve fuerte en Weather Icons)
+
+    # 95: Tormenta ligera/moderada, 96: Tormenta con granizo ligero, 99: fuerte con granizo (TORMENTA / EKAITZA)
+    elif code == 95:
+        return "\uf01e"  # Tormenta (\uf01e - tormenta en Weather Icons)
+    elif code in [96, 99]:
+        return "\uf03b"  # Tormenta con granizo (\uf03b - tormenta con granizo en Weather Icons)
+
+    # En caso de código desconocido o no clasificado
+    return "\uf07b"  # Icono genérico/desconocido (\uf07b - desconocido en Weather Icons)
+
 def draw_dashboard():
     netatmo = get_netatmo_data()
     hourly, daily = get_weather_bilbao()
@@ -126,6 +200,7 @@ def draw_dashboard():
         font_med = ImageFont.truetype("Roboto-Bold.ttf", 35)
         font_reg = ImageFont.truetype("Roboto-Regular.ttf", 28)
         font_small = ImageFont.truetype("Roboto-Regular.ttf", 22)
+        font_icons = ImageFont.truetype("weathericons-regular-webfont.ttf", 40)
     except:
         font_huge = font_big = font_med = font_reg = font_small = ImageFont.load_default()
 
@@ -188,6 +263,8 @@ def draw_dashboard():
         draw.text((x_base, y), h['hora'], fill=0, font=font_med)
         draw.text((x_base+120, y), h['temp'], fill=0, font=font_med)
         icono = get_weather_icon(h['code'])
+        # CAMBIAS font_reg POR font_icons:
+        draw.text((x_base+220, y), icono, fill=0, font=font_icons)
         draw.text((x_base+220, y), icono, fill=0, font=font_reg)
         texto_lluvia = f"{h['prob_lluvia']} ({h['mm']}L)"
         draw.text((x_base+320, y), texto_lluvia, fill=0, font=font_reg)
@@ -203,7 +280,7 @@ def draw_dashboard():
         dia = ["ASTELEH", "ASTEART", "ASTEAZK", "OSTEGUN", "OSTIRAL", "LARUNB", "IGANDE"][fecha_obj.weekday()]
         
         draw.text((x, y_text), dia, fill=0, font=font_med)
-        draw.text((x + 160, y_text + 5), get_weather_icon(w['code']), fill=0, font=font_small)
+        draw.text((x + 160, y_text + 5), get_weather_icon(w['code']), fill=0, font=font_icons)
         
         draw.text((x, y_text + 50), f"{w['max']} / {w['min']}", fill=0, font=font_med)
         draw.text((x, y_text + 105), f"Euria: {w['mm_sum']}", fill=0, font=font_med)
