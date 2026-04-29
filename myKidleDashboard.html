@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Bilbao Dashboard</title>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0; 
+            background: black; 
+        }
+        img { 
+            width: 100%; 
+            display: block; 
+        }
+    </style>
+</head>
+<body>
+
+    <img id="dashboard" src="" alt="Cargando Bilbao...">
+
+    <script>
+        function updateImage() {
+            var t = new Date().getTime();
+            // Usamos tu enlace directo de GitHub Pages
+            var url = "http://xigoa.github.io/myKindleDashboard/dashboard_rotated.png?t=" + t;
+            
+            document.getElementById('dashboard').src = url;
+            console.log("Imagen actualizada a las: " + new Date().toLocaleTimeString());
+        }
+
+        // Cargar al abrir el archivo
+        updateImage();
+
+        // Refrescar cada 5 minutos (300000 milisegundos)
+        setInterval(updateImage, 300000);
+    </script>
+</body>
+</html>
