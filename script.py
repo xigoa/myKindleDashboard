@@ -22,9 +22,18 @@ def get_wind_direction(degrees):
 
 def get_wind_arrow(degrees):
     if degrees is None: return ""
-    # Flechas apuntando hacia dónde VA el viento
-    # 0° (Norte) va hacia el Sur (↓), 90° (Este) va hacia el Oeste (←), etc.
-    arrows = ["↓", "↙", "←", "↖", "↑", "↗", "→", "↘"]
+    # Flechas de la fuente Weather Icons (wi-direction-*)
+    # 0° (Norte -> Sur), 45° (NE -> SO), 90° (E -> O), etc.
+    arrows = [
+        "\uf058", # ↓ (Sur)
+        "\uf059", # ↙ (Suroeste)
+        "\uf056", # ← (Oeste)
+        "\uf057", # ↖ (Noroeste)
+        "\uf05c", # ↑ (Norte)
+        "\uf05d", # ↗ (Noreste)
+        "\uf05a", # → (Este)
+        "\uf05b"  # ↘ (Sureste)
+    ]
     ix = int((degrees + 22.5) / 45) % 8
     return arrows[ix]
 
@@ -277,8 +286,9 @@ def draw_dashboard():
         
         # ¡NUEVA LÍNEA! Dibujamos la flecha en el hueco X=275. 
         # Usamos font_reg (Roboto) que pinta las flechas estándar perfectas.
+        # Usamos font_icons para que entienda las flechas de viento
         flecha = get_wind_arrow(h['wind_dir'])
-        draw.text((x_base+275, y), flecha, fill=0, font=font_reg)
+        draw.text((x_base+275, y), flecha, fill=0, font=font_icons)
         
         texto_lluvia = f"{h['prob_lluvia']} ({h['mm']}L)"
         draw.text((x_base+320, y), texto_lluvia, fill=0, font=font_reg)
@@ -306,9 +316,9 @@ def draw_dashboard():
     img.save("dashboard.png")
 
     # 2. Guardar la versión rotada (Tumbada, exclusiva para el Kindle)
-    img_rotated = img.rotate(270, expand=True) # Cambia a -90 si prefieres que gire hacia el otro lado
+    img_rotated = img.rotate(270, expand=True) 
     img_kindle = img_rotated.resize((600, 800)) # ¡Forzamos el tamaño exacto!
-    img_rotated.save("dashboard_rotated.png")
+    img_kindle.save("dashboard_rotated.png") # <--- AHORA SÍ GUARDAMOS LA PEQUEÑA
 
 if __name__ == "__main__":
     draw_dashboard()
