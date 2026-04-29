@@ -209,7 +209,7 @@ def draw_dashboard():
         draw.text((x, y_text + 105), f"Euria: {w['mm_sum']}", fill=0, font=font_med)
         
         # ¡NUEVA LÍNEA DEL VIENTO! La ponemos a una altura de Y + 160
-        draw.text((x, y_text + 160), f"Haizea: {w['wind_speed']} {w['wind_dir']}", fill=0, font=font_med)
+        draw.text((x, y_text + 160), f"H: {w['wind_speed']} {w['wind_dir']}", fill=0, font=font_med)
 
     # 1. Guardar la versión normal (Derecha, para tu ordenador)
     img.save("dashboard.png")
