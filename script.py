@@ -20,9 +20,17 @@ def get_wind_direction(degrees):
     ix = int((degrees + 22.5) / 45) % 8
     return dirs[ix]
 
+def get_wind_arrow(degrees):
+    if degrees is None: return ""
+    # Flechas apuntando hacia dónde VA el viento
+    # 0° (Norte) va hacia el Sur (↓), 90° (Este) va hacia el Oeste (←), etc.
+    arrows = ["↓", "↙", "←", "↖", "↑", "↗", "→", "↘"]
+    ix = int((degrees + 22.5) / 45) % 8
+    return arrows[ix]
+
 def get_weather_bilbao():
     # ¡NUEVA URL! Hemos añadido wind_speed_10m_max y wind_direction_10m_dominant
-    url = f"https://api.open-meteo.com/v1/forecast?latitude={LAT_BILBAO}&longitude={LON_BILBAO}&hourly=temperature_2m,precipitation_probability,precipitation,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant&timezone=Europe%2FBerlin"
+    url = f"https://api.open-meteo.com/v1/forecast?latitude={LAT_BILBAO}&longitude={LON_BILBAO}&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_direction_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant&timezone=Europe%2FBerlin"
     data = requests.get(url).json()
     
     daily = data['daily']
@@ -58,7 +66,8 @@ def get_weather_bilbao():
             "temp": f"{int(hourly['temperature_2m'][i])}°",
             "prob_lluvia": f"{hourly['precipitation_probability'][i]}%",
             "mm": hourly['precipitation'][i],
-            "code": hourly['weather_code'][i]
+            "code": hourly['weather_code'][i],
+            "wind_dir": hourly['wind_direction_10m'][i] # ¡NUEVO DATO RECOGIDO!
         })
         
     return forecast_hourly, forecast_daily
@@ -252,7 +261,7 @@ def draw_dashboard():
 
     # --- 3. PRÓXIMAS 16 HORAS ---
     y_sep_hourly = 410
-    draw.line([MARCO_LATERAL, y_sep_hourly, WIDTH - MARCO_LATERAL, y_sep_hourly], fill=0, width=4)
+    draw.line([MARCO_LATERAL + 30, y_sep_hourly, WIDTH - MARCO_LATERAL - 30, y_sep_hourly], fill=0, width=4)
 
     for i, h in enumerate(hourly):
         col = i // 8
@@ -262,10 +271,15 @@ def draw_dashboard():
         
         draw.text((x_base, y), h['hora'], fill=0, font=font_med)
         draw.text((x_base+120, y), h['temp'], fill=0, font=font_med)
+        
         icono = get_weather_icon(h['code'])
-        # CAMBIAS font_reg POR font_icons:
         draw.text((x_base+220, y), icono, fill=0, font=font_icons)
-        draw.text((x_base+220, y), icono, fill=0, font=font_reg)
+        
+        # ¡NUEVA LÍNEA! Dibujamos la flecha en el hueco X=275. 
+        # Usamos font_reg (Roboto) que pinta las flechas estándar perfectas.
+        flecha = get_wind_arrow(h['wind_dir'])
+        draw.text((x_base+275, y), flecha, fill=0, font=font_reg)
+        
         texto_lluvia = f"{h['prob_lluvia']} ({h['mm']}L)"
         draw.text((x_base+320, y), texto_lluvia, fill=0, font=font_reg)
 
