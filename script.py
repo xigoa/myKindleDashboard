@@ -173,7 +173,7 @@ def draw_dashboard():
     img.save("dashboard.png")
 
     # 2. Guardar la versión rotada (Tumbada, exclusiva para el Kindle)
-    img_rotated = img.rotate(90, expand=True) # Cambia a -90 si prefieres que gire hacia el otro lado
+    img_rotated = img.rotate(270, expand=True) # Cambia a -90 si prefieres que gire hacia el otro lado
     img_kindle = img_rotated.resize((600, 800)) # ¡Forzamos el tamaño exacto!
     img_rotated.save("dashboard_rotated.png")
 
