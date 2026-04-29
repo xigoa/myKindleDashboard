@@ -13,8 +13,16 @@ LON_BILBAO = -2.9253
 MARCO_LATERAL = 100
 MARCO_ABAJO = 40
 
+def get_wind_direction(degrees):
+    if degrees is None: return ""
+    # Puntos cardinales en Euskera: N, NE, E, SE, S, SW, W, NW
+    dirs = ["I", "IE", "E", "HE", "H", "HM", "M", "IM"] 
+    ix = int((degrees + 22.5) / 45) % 8
+    return dirs[ix]
+
 def get_weather_bilbao():
-    url = f"https://api.open-meteo.com/v1/forecast?latitude={LAT_BILBAO}&longitude={LON_BILBAO}&hourly=temperature_2m,precipitation_probability,precipitation,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum&timezone=Europe%2FBerlin"
+    # ¡NUEVA URL! Hemos añadido wind_speed_10m_max y wind_direction_10m_dominant
+    url = f"https://api.open-meteo.com/v1/forecast?latitude={LAT_BILBAO}&longitude={LON_BILBAO}&hourly=temperature_2m,precipitation_probability,precipitation,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant&timezone=Europe%2FBerlin"
     data = requests.get(url).json()
     
     daily = data['daily']
@@ -26,7 +34,9 @@ def get_weather_bilbao():
             "min": f"{int(daily['temperature_2m_min'][i])}°",
             "prob_lluvia": f"{daily['precipitation_probability_max'][i]}%",
             "mm_sum": f"{daily['precipitation_sum'][i]}L",
-            "code": daily['weather_code'][i]
+            "code": daily['weather_code'][i],
+            "wind_speed": f"{int(daily['wind_speed_10m_max'][i])} km/h", # Nuevo
+            "wind_dir": get_wind_direction(daily['wind_direction_10m_dominant'][i]) # Nuevo
         })
 
     hourly = data['hourly']
@@ -195,9 +205,11 @@ def draw_dashboard():
         draw.text((x, y_text), dia, fill=0, font=font_med)
         draw.text((x + 160, y_text + 5), get_weather_icon(w['code']), fill=0, font=font_small)
         
-       # ... (todo el código anterior de la previsión diaria se queda igual) ...
         draw.text((x, y_text + 50), f"{w['max']} / {w['min']}", fill=0, font=font_med)
         draw.text((x, y_text + 105), f"Euria: {w['mm_sum']}", fill=0, font=font_med)
+        
+        # ¡NUEVA LÍNEA DEL VIENTO! La ponemos a una altura de Y + 160
+        draw.text((x, y_text + 160), f"Haizea: {w['wind_speed']} {w['wind_dir']}", fill=0, font=font_med)
 
     # 1. Guardar la versión normal (Derecha, para tu ordenador)
     img.save("dashboard.png")
