@@ -30,4 +30,4 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: "Dashboard update"
-          file_pattern: dashboard.png
+          file_pattern: dashboard.png dashboard_rotated.png
