@@ -169,12 +169,12 @@ def draw_dashboard():
         draw.text((x, y_text + 50), f"{w['max']} / {w['min']}", fill=0, font=font_med)
         draw.text((x, y_text + 105), f"Euria: {w['mm_sum']}", fill=0, font=font_med)
 
-        # 1. Guardar la versión normal (Derecha, para tu ordenador)
-        img.save("dashboard.png")
-    
-        # 2. Guardar la versión rotada (Tumbada, exclusiva para el Kindle)
-        img_rotated = img.rotate(90, expand=True) # Cambia a -90 si prefieres que gire hacia el otro lado
-        img_rotated.save("dashboard_rotated.png")
-    
-    if __name__ == "__main__":
-        draw_dashboard()
+    # 1. Guardar la versión normal (Derecha, para tu ordenador)
+    img.save("dashboard.png")
+
+    # 2. Guardar la versión rotada (Tumbada, exclusiva para el Kindle)
+    img_rotated = img.rotate(90, expand=True) # Cambia a -90 si prefieres que gire hacia el otro lado
+    img_rotated.save("dashboard_rotated.png")
+
+if __name__ == "__main__":
+    draw_dashboard()
