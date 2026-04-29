@@ -160,7 +160,7 @@ def draw_dashboard():
         x = MARCO_LATERAL + 35 + (i * 345)
         y_text = y_sep_daily + 25
         fecha_obj = datetime.datetime.strptime(w['fecha'], '%Y-%m-%d')
-        dia = ["ASTELEH", "ASTEART", "ASTEAZK", "OSTEGUN", "OSTIRAL", "LARUNBAT", "IGANDE"][fecha_obj.weekday()]
+        dia = ["ASTELEH", "ASTEART", "ASTEAZK", "OSTEGUN", "OSTIRAL", "LARUNB", "IGANDE"][fecha_obj.weekday()]
         
         draw.text((x, y_text), dia, fill=0, font=font_med)
         draw.text((x + 160, y_text + 5), get_weather_icon(w['code']), fill=0, font=font_small)
