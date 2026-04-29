@@ -80,11 +80,21 @@ def get_netatmo_data():
             d = e.get('dashboard_data', {})
             nombre = e.get('module_name', 'Principal').upper()
             nombre_limpio = nombre.replace("JONEN LOGELA", "JONEN LOGELA").replace("EGONGELA", "EGONGELA").replace("KALEA", "KALEA")
+            
+            # Sacar la hora exacta de la medición
+            ts = d.get('time_utc')
+            if ts:
+                dt = datetime.datetime.fromtimestamp(ts, pytz.timezone('Europe/Madrid'))
+                hora_medicion = dt.strftime("%H:%M")
+            else:
+                hora_medicion = "--:--"
+
             res_list.append({
                 "nombre": nombre_limpio,
                 "temp": f"{d.get('Temperature', '--')}°",
                 "co2": f"{d.get('CO2', '--')}",
-                "hum": f"{d.get('Humidity', '--')}%"
+                "hum": f"{d.get('Humidity', '--')}%",
+                "hora": hora_medicion # Añadimos la hora al diccionario
             })
             
         calle = next((item for item in res_list if "KALEA" in item["nombre"]), None)
@@ -119,7 +129,27 @@ def draw_dashboard():
     zona_bilbao = pytz.timezone('Europe/Madrid')
     ahora_dt = datetime.datetime.now(zona_bilbao)
     ahora_str = ahora_dt.strftime("%d %b  |  %H:%M")
-    draw.text((MARCO_LATERAL + 30, 20), f"BILBAO - {ahora_str}", fill=255, font=font_big)
+    
+    # 1.1 Texto principal (Hora de creación del PNG)
+    texto_principal = f"BILBAO - {ahora_str}"
+    draw.text((MARCO_LATERAL + 30, 20), texto_principal, fill=255, font=font_big)
+    
+    # 1.2 Calcular dónde poner la hora de Netatmo
+    # Calculamos el ancho del texto principal para poner el paréntesis justo a la derecha
+    try:
+        ancho_principal = int(font_big.getlength(texto_principal))
+    except AttributeError:
+        # Fallback por si la máquina de GitHub usa una versión antigua de Pillow
+        ancho_principal = font_big.getsize(texto_principal)[0] 
+        
+    # Cogemos la hora de actualización del primer sensor de Netatmo
+    hora_netatmo = netatmo[0]['hora'] if netatmo else "--:--"
+    texto_netatmo = f"(Netatmo: {hora_netatmo})"
+    
+    # Lo dibujamos sumando el ancho del texto principal + 20 píxeles de margen.
+    # Bajamos la Y a 30 (en vez de 20) para que la letra pequeña se alinee bien por abajo.
+    pos_x_netatmo = MARCO_LATERAL + 30 + ancho_principal + 20
+    draw.text((pos_x_netatmo, 30), texto_netatmo, fill=255, font=font_med)
 
     # --- 2. BLOQUE NETATMO ---
     for i, e in enumerate(netatmo[:3]):
