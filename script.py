@@ -167,7 +167,7 @@ def draw_dashboard():
 
     # --- 3. PRÓXIMAS 16 HORAS ---
     y_sep_hourly = 410
-    draw.line([MARCO_LATERAL + 30, y_sep_hourly, WIDTH - MARCO_LATERAL - 30, y_sep_hourly], fill=0, width=4)
+    draw.line([MARCO_LATERAL, y_sep_hourly, WIDTH - MARCO_LATERAL, y_sep_hourly], fill=0, width=4)
 
     for i, h in enumerate(hourly):
         col = i // 8
