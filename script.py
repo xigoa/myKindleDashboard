@@ -144,7 +144,7 @@ def draw_dashboard():
         
     # Cogemos la hora de actualización del primer sensor de Netatmo
     hora_netatmo = netatmo[0]['hora'] if netatmo else "--:--"
-    texto_netatmo = f"(Netatmo: {hora_netatmo})"
+    texto_netatmo = f"({hora_netatmo})"
     
     # Lo dibujamos sumando el ancho del texto principal + 20 píxeles de margen.
     # Bajamos la Y a 30 (en vez de 20) para que la letra pequeña se alinee bien por abajo.
