@@ -148,7 +148,7 @@ def draw_dashboard():
     
     # Lo dibujamos sumando el ancho del texto principal + 20 píxeles de margen.
     # Bajamos la Y a 30 (en vez de 20) para que la letra pequeña se alinee bien por abajo.
-    pos_x_netatmo = MARCO_LATERAL + 30 + ancho_principal + 60
+    pos_x_netatmo = MARCO_LATERAL + 30 + ancho_principal + 150
     draw.text((pos_x_netatmo, 30), texto_netatmo, fill=255, font=font_med)
 
     # --- 2. BLOQUE NETATMO ---
