@@ -86,7 +86,6 @@ def get_netatmo_data():
     archivo_cache = "netatmo_cache.json"
     
     try:
-        try:
         token_url = "https://api.netatmo.com/oauth2/token"
         payload = {
             "grant_type": "refresh_token",
