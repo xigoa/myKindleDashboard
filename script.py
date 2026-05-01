@@ -123,7 +123,7 @@ def get_netatmo_data():
         otros = [item for item in res_list if "KALEA" not in item["nombre"]]
         return ([calle] if calle else []) + otros
     except:
-        return [{"nombre": "ERROR", "temp": "--", "co2": "400", "hum": "--"}] * 3
+        return [{"nombre": "ERROR", "temp": "--", "co2": "400", "hum": "--", "hora": "--:--"}] * 3
 
 def get_weather_icon(code):
     """
@@ -246,7 +246,7 @@ def draw_dashboard():
         ancho_principal = font_big.getsize(texto_principal)[0] 
         
     # Cogemos la hora de actualización del primer sensor de Netatmo
-    hora_netatmo = netatmo[0]['hora'] if netatmo else "--:--"
+    hora_netatmo = netatmo[0].get('hora', '--:--') if netatmo else "--:--"
     texto_netatmo = f"({hora_netatmo})"
     
     # Lo dibujamos sumando el ancho del texto principal + 20 píxeles de margen.
