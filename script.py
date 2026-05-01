@@ -1,5 +1,6 @@
 import os
 import datetime
+import json
 import pytz
 import requests
 from PIL import Image, ImageDraw, ImageFont
@@ -82,6 +83,8 @@ def get_weather_bilbao():
     return forecast_hourly, forecast_daily
 
 def get_netatmo_data():
+    archivo_cache = "netatmo_cache.json"
+    
     try:
         token_url = "https://api.netatmo.com/oauth2/token"
         payload = {
@@ -116,15 +119,31 @@ def get_netatmo_data():
                 "temp": f"{d.get('Temperature', '--')}°",
                 "co2": f"{d.get('CO2', '--')}",
                 "hum": f"{d.get('Humidity', '--')}%",
-                "hora": hora_medicion # Añadimos la hora al diccionario
+                "hora": hora_medicion 
             })
             
         calle = next((item for item in res_list if "KALEA" in item["nombre"]), None)
         otros = [item for item in res_list if "KALEA" not in item["nombre"]]
-        return ([calle] if calle else []) + otros
-    except:
-        return [{"nombre": "ERROR", "temp": "--", "co2": "400", "hum": "--", "hora": "--:--"}] * 3
-
+        resultado_final = ([calle] if calle else []) + otros
+        
+        # ¡ÉXITO! Guardamos los datos en nuestro "cuaderno" por si acaso la próxima vez falla
+        with open(archivo_cache, 'w') as f:
+            json.dump(resultado_final, f)
+            
+        return resultado_final
+        
+    except Exception as error_api:
+        # ¡FALLO! La API de Netatmo no responde. Vamos a buscar nuestro cuaderno.
+        try:
+            with open(archivo_cache, 'r') as f:
+                datos_viejos = json.load(f)
+                print("Usando datos cacheados de Netatmo.")
+                return datos_viejos
+        except Exception as error_cache:
+            # Fallo catastrófico (ej: es la primera vez que arranca y no existe el archivo aún)
+            print("Error total. Sin datos en caché.")
+            return [{"nombre": "ERROR", "temp": "--", "co2": "400", "hum": "--", "hora": "--:--"}] * 3
+            
 def get_weather_icon(code):
     """
     Devuelve el icono Unicode (para una fuente de iconos del tiempo)
