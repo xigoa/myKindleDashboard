@@ -86,6 +86,7 @@ def get_netatmo_data():
     archivo_cache = "netatmo_cache.json"
     
     try:
+        try:
         token_url = "https://api.netatmo.com/oauth2/token"
         payload = {
             "grant_type": "refresh_token",
@@ -93,11 +94,23 @@ def get_netatmo_data():
             "client_id": os.environ['NETATMO_CLIENT_ID'],
             "client_secret": os.environ['NETATMO_CLIENT_SECRET']
         }
-        resp = requests.post(token_url, data=payload).json()
-        access_token = resp['access_token']
+        
+        # 1. Pedimos la llave
+        resp = requests.post(token_url, data=payload)
+        if resp.status_code != 200:
+            print(f"❌ ERROR DE NETATMO (TOKEN): {resp.status_code} - {resp.text}")
+            raise Exception("Fallo al pedir el token")
+            
+        access_token = resp.json()['access_token']
+        
+        # 2. Pedimos los datos
         data_url = "https://api.netatmo.com/api/getstationsdata"
-        res = requests.get(data_url, headers={"Authorization": f"Bearer {access_token}"}).json()
-        devices = res['body']['devices'][0]
+        res = requests.get(data_url, headers={"Authorization": f"Bearer {access_token}"})
+        if res.status_code != 200:
+            print(f"❌ ERROR DE NETATMO (DATOS): {res.status_code} - {res.text}")
+            raise Exception("Fallo al pedir los datos")
+            
+        devices = res.json()['body']['devices'][0]
         estaciones = [devices] + devices.get('modules', [])
         
         res_list = []
