@@ -1,7 +1,5 @@
 name: Refrescar Dashboard
 on:
-  schedule:
-    - cron: '3,13,23,33,43,53 * * * *'
   workflow_dispatch:
 
 jobs:
