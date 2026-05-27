@@ -4,6 +4,8 @@ import json
 import pytz
 import requests
 from PIL import Image, ImageDraw, ImageFont
+import smtplib
+from email.mime.text import MIMEText
 
 # --- CONFIGURACIÓN ---
 # Ancho: 100 (izq) + 1072 (centro) + 100 (der) = 1272px
@@ -13,6 +15,27 @@ LAT_BILBAO = 43.2627
 LON_BILBAO = -2.9253
 MARCO_LATERAL = 100
 MARCO_ABAJO = 40
+
+def enviar_email(accion):
+    try:
+        remitente = os.environ.get('EMAIL_USER')
+        password = os.environ.get('EMAIL_PASS')
+        if not remitente or not password:
+            return # Si no hay datos de email configurados, no hacemos nada
+            
+        destinatario = remitente # Te lo envías a ti mismo
+
+        msg = MIMEText(f"¡Es el momento ideal! Toca {accion} las ventanas de JONEN LOGELA para mantener la temperatura óptima.")
+        msg['Subject'] = f"Aviso Ventanas: {accion}"
+        msg['From'] = remitente
+        msg['To'] = destinatario
+
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(remitente, password)
+            server.send_message(msg)
+        print(f"📧 Email de {accion} enviado correctamente.")
+    except Exception as e:
+        print(f"❌ Error enviando email: {e}")
 
 def get_wind_direction(degrees):
     if degrees is None: return ""
@@ -239,6 +262,47 @@ def get_weather_icon(code):
 def draw_dashboard():
     netatmo = get_netatmo_data()
     hourly, daily = get_weather_bilbao()
+
+    # --- LÓGICA DE AVISO DE VENTANAS ---
+    try:
+        temp_kalea = None
+        temp_logela = None
+        
+        # Extraemos las temperaturas y las convertimos a números reales
+        for sensor in netatmo:
+            if "KALEA" in sensor['nombre'] and sensor['temp'] != '--°':
+                temp_kalea = float(sensor['temp'].replace('°', ''))
+            if "JONEN LOGELA" in sensor['nombre'] and sensor['temp'] != '--°':
+                temp_logela = float(sensor['temp'].replace('°', ''))
+
+        # Si tenemos ambas temperaturas, pensamos si enviar email
+        if temp_kalea is not None and temp_logela is not None:
+            archivo_estado = "estado_ventanas.json"
+            estado_actual = "DESCONOCIDO"
+            
+            # Leer qué hicimos la última vez
+            if os.path.exists(archivo_estado):
+                with open(archivo_estado, 'r') as f:
+                    estado_actual = json.load(f).get("estado", "DESCONOCIDO")
+
+            nuevo_estado = estado_actual
+
+            # Lógica de cruce
+            if temp_kalea > temp_logela and estado_actual != "CERRAR":
+                enviar_email("CIERRA")
+                nuevo_estado = "CERRAR"
+            elif temp_kalea < temp_logela and estado_actual != "ABRIR":
+                enviar_email("ABRE")
+                nuevo_estado = "ABRIR"
+
+            # Si el estado ha cambiado, lo apuntamos en nuestro cuaderno para no repetir
+            if nuevo_estado != estado_actual:
+                with open(archivo_estado, 'w') as f:
+                    json.dump({"estado": nuevo_estado}, f)
+    except Exception as e:
+        print(f"Error procesando lógica de ventanas: {e}")
+    # -----------------------------------
+
     
     img = Image.new('L', (WIDTH, HEIGHT), 255)
     draw = ImageDraw.Draw(img)
