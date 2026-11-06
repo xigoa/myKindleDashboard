@@ -1,1 +1,1 @@
-[{"nombre": "KALEA", "temp": "12\u00b0", "co2": "--", "hum": "73%", "hora": "23:01"}, {"nombre": "JONEN LOGELA", "temp": "20.3\u00b0", "co2": "1450", "hum": "61%", "hora": "23:30"}, {"nombre": "EGONGELA", "temp": "21.2\u00b0", "co2": "941", "hum": "60%", "hora": "23:29"}]
+[{"nombre": "KALEA", "temp": "--\u00b0", "co2": "--", "hum": "--%", "hora": "--:--"}, {"nombre": "JONEN LOGELA", "temp": "20.3\u00b0", "co2": "1496", "hum": "61%", "hora": "23:40"}, {"nombre": "EGONGELA", "temp": "21.2\u00b0", "co2": "969", "hum": "60%", "hora": "23:40"}]
